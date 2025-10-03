@@ -50,6 +50,9 @@ public static class InfrastructureExtensions
         IConfigurationSection GemelliApiSection = configuration.GetSection(nameof(GemelliApiSettings));
         services.Configure<GemelliApiSettings>(GemelliApiSection);
 
+        IConfigurationSection gemelliAISection = configuration.GetSection(nameof(GemelliAISettings));
+        services.Configure<GemelliAISettings>(gemelliAISection);
+
         IConfigurationSection templateEmailSettingsSection = configuration.GetSection(nameof(TemplateEmailSettings));
         services.Configure<TemplateEmailSettings>(templateEmailSettingsSection);
 

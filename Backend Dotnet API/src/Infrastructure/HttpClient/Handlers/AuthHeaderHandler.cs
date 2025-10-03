@@ -1,42 +1,29 @@
-using System.Net.Http.Headers;
-using Microsoft.AspNetCore.Http;
+using Application.AppConfig;
+using Microsoft.Extensions.Options;
 
 namespace Infrastructure.HttpClient.Handlers;
 
 public class AuthHeaderHandler : DelegatingHandler
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly string _token;
 
-    public AuthHeaderHandler(IHttpContextAccessor httpContextAccessor)
+    public AuthHeaderHandler(IOptions<GemelliAISettings> gemelliAISettings)
     {
-        _httpContextAccessor = httpContextAccessor;
+        _token = gemelliAISettings.Value.Token ?? string.Empty;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        try
+        if (!string.IsNullOrWhiteSpace(_token))
         {
-            HttpContext? context = _httpContextAccessor.HttpContext;
-            if (context != null && context.Request.Headers.TryGetValue("token", out Microsoft.Extensions.Primitives.StringValues tokenValues))
+            if (request.Headers.Contains("token"))
             {
-                string? token = tokenValues.FirstOrDefault();
-                if (!string.IsNullOrWhiteSpace(token))
-                {
-                    // Remove any existing header with same name to avoid duplicates
-                    if (request.Headers.Contains("token"))
-                    {
-                        request.Headers.Remove("token");
-                    }
-
-                    request.Headers.Add("token", token);
-                }
+                request.Headers.Remove("token");
             }
-        }
-        catch
-        {
-            // If anything goes wrong reading the incoming context, don't block the outgoing request.
+
+            request.Headers.Add("token", _token);
         }
 
         return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
