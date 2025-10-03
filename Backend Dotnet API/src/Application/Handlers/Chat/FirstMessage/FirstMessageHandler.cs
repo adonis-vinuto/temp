@@ -92,7 +92,8 @@ public class FirstMessageHandler : BaseHandler
             UserName = user.Name,
             UserEmail = user.Email,
             AgentType = "basic",
-            Documents = documentsForService
+            Documents = documentsForService,
+            Preferences = CreateDefaultPreferences()
         }, cancellationToken);
 
         if (chatResult.IsError)
@@ -140,4 +141,12 @@ public class FirstMessageHandler : BaseHandler
             SessionId = session.Id.ToString()
         };
     }
+
+    private static Dictionary<string, string> CreateDefaultPreferences() => new()
+    {
+        ["agent-personality"] = "Very formal",
+        ["use-emoji"] = "Never",
+        ["response-type"] = "Concise",
+        ["refer-to-user-as"] = "Mr.,Mrs."
+    };
 }
