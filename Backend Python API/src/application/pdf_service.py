@@ -25,6 +25,13 @@ def _extract_file_type(filename: str) -> str:
     
         return "unknown"
 
+try:
+    pytesseract.get_tesseract_version()
+    _TESSERACT_AVAILABLE = True
+except pytesseract.TesseractNotFoundError:
+    _TESSERACT_AVAILABLE = False
+
+
 def extract_text_from_pdf_bytes(pdf_bytes: bytes, filename: str):
     """Extract text from PDF bytes.
 
@@ -45,6 +52,11 @@ def extract_text_from_pdf_bytes(pdf_bytes: bytes, filename: str):
     raw_pages: List[dict] = []
     # Helper: try OCR with a sequence of language fallbacks and handle errors
     def _ocr_with_fallback(pil_image) -> str:
+        if not _TESSERACT_AVAILABLE:
+            raise RuntimeError(
+                "Tesseract OCR is not installed or not available in PATH. "
+                "Install Tesseract to enable OCR for scanned PDFs."
+            )
         # Preferred languages to try (Portuguese then English, then default)
         candidates = ["por", "eng", None]
         last_exc: Exception | None = None
