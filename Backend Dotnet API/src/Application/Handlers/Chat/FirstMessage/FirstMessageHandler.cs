@@ -5,6 +5,8 @@ using Authentication.Models;
 using Domain.Enums;
 using Domain.Errors;
 using ErrorOr;
+using System.Collections.Generic;
+using System.Linq;
 using AgentEntity = Domain.Entities.Agent;
 using ChatHistoryEntity = Domain.Entities.ChatHistory;
 using ChatSessionEntity = Domain.Entities.ChatSession;
@@ -68,25 +70,29 @@ public class FirstMessageHandler : BaseHandler
             return AgentErrors.AgentNotFound;
         }
 
-        //var filesForService = agent.Files
-        //.Where(f => !string.IsNullOrWhiteSpace(f.Content))
-        //.Select(f => (Name: f.FileName, Content: f.Content!))
-        
+        List<string> documentsForService = agent.Files?
+            .Select(file => file.Id.ToString())
+            .ToList() ?? new List<string>();
+
         string teste = module.ToString();
         if (string.IsNullOrWhiteSpace(teste))
         {
             module = Module.People;
         }
 
+        Guid sessionId = Guid.NewGuid();
+
         ErrorOr<GemelliAIChatResponse> chatResult = await _gemelliAIService.ChatAsync(new GemelliAIChatRequest
         {
+            IdSession = sessionId.ToString(),
+            IdAgent = agent.Id.ToString(),
             Message = request.Message,
             Module = module.ToString(),
             Organization = agent.Organization,
             UserName = user.Name,
             UserEmail = user.Email,
             AgentType = "basic",
-            //Files = filesForService
+            Documents = documentsForService
         }, cancellationToken);
 
         if (chatResult.IsError)
@@ -96,6 +102,7 @@ public class FirstMessageHandler : BaseHandler
 
         ChatSessionEntity session = new()
         {
+            Id = sessionId,
             IdAgent = agent.Id,
             Agent = agent,
             IdUser = user.IdUser,

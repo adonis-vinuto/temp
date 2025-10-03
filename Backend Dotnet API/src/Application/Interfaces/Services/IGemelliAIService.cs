@@ -1,5 +1,5 @@
+using System.Collections.Generic;
 using ErrorOr;
-
 
 namespace Application.Interfaces.Services;
 
@@ -17,14 +17,17 @@ public interface IGemelliAIService
 
 public class GemelliAIChatRequest
 {
+    public string? IdSession { get; set; }
+    public string IdAgent { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
-    public string Module { get; set; }
+    public string Module { get; set; } = string.Empty;
     public string Organization { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
     public string UserEmail { get; set; } = string.Empty;
     public string AgentType { get; set; } = string.Empty;
+    public Dictionary<string, string>? Preferences { get; set; }
+    public List<string> Documents { get; set; } = new();
     public List<(int Role, string Content)> ChatHistory { get; set; } = new();
-    public List<(string Name, string Content)> Files { get; set; } = new();
 }
 
 public class GemelliAIChatResponse

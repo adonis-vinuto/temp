@@ -5,6 +5,8 @@ using Authentication.Models;
 using Domain.Enums;
 using Domain.Errors;
 using ErrorOr;
+using System.Collections.Generic;
+using System.Linq;
 using AgentEntity = Domain.Entities.Agent;
 using ChatHistoryEntity = Domain.Entities.ChatHistory;
 using ChatSessionEntity = Domain.Entities.ChatSession;
@@ -84,9 +86,9 @@ public class SendChatMessageHandler : BaseHandler
             return ChatSessionErrors.SessionAgentMismatch;
         }
 
-        //var filesForService = agent.Files
-            //.Where(f => !string.IsNullOrWhiteSpace(f.Content))
-            //.Select(f => (Name: f.FileName, Content: f.Content!))
+        List<string> documentsForService = agent.Files?
+            .Select(file => file.Id.ToString())
+            .ToList() ?? new List<string>();
 
         var historyForService = session.ChatHistory
             .OrderBy(h => h.CreatedAt)
@@ -95,13 +97,15 @@ public class SendChatMessageHandler : BaseHandler
 
         ErrorOr<GemelliAIChatResponse> chatResult = await _gemelliAIService.ChatAsync(new GemelliAIChatRequest
         {
+            IdSession = session.Id.ToString(),
+            IdAgent = agent.Id.ToString(),
             Message = request.Message,
             Module = module.ToString(),
             Organization = agent.Organization,
             UserName = user.Name,
             UserEmail = user.Email,
             AgentType = "basic",
-            //Files = filesForService,
+            Documents = documentsForService,
             ChatHistory = historyForService
         }, cancellationToken);
 

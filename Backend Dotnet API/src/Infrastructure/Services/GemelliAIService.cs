@@ -5,6 +5,7 @@ using Infrastructure.Contracts.GemelliAI.Response;
 using Infrastructure.HttpClient.GemelliAI;
 using Microsoft.Extensions.Logging;
 using Refit;
+using System.Linq;
 
 namespace Infrastructure.Services;
 
@@ -29,8 +30,10 @@ public class GemelliAIService : IGemelliAIService
         {
             var apiRequest = new ChatRequest
             {
+                IdSession = request.IdSession,
+                IdAgent = request.IdAgent,
                 Message = request.Message,
-                Module = request.Module.ToString(),
+                Module = request.Module,
                 Organization = request.Organization,
                 User = new ChatUser
                 {
@@ -38,11 +41,8 @@ public class GemelliAIService : IGemelliAIService
                     Email = request.UserEmail
                 },
                 AgentType = request.AgentType,
-                Files = request.Files.Select(f => new ChatFile
-                {
-                    Name = f.Name,
-                    Content = f.Content
-                }).ToList(),
+                Preferences = request.Preferences,
+                Documents = request.Documents,
                 ChatHistory = request.ChatHistory.Select(h => new ChatHistoryItem
                 {
                     Role = h.Role,
