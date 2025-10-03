@@ -1,0 +1,138 @@
+services:
+  db:
+    image: docker.io/library/mysql:8.0
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: localdb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "user",
+          "-ppassword",
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  db2:
+    image: docker.io/library/mysql:8.0
+    container_name: mysql_db_segundo
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: localdb_segundo
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data_segundo:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "user",
+          "-ppassword",
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  db3:
+    image: docker.io/library/mysql:8.0
+    container_name: mysql_db_terceiro
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: localdb_terceiro
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3308:3306"
+    volumes:
+      - db_data_terceiro:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "user",
+          "-ppassword",
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  seq:
+    image: docker.io/datalust/seq
+    container_name: seq
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - "5341:80"
+    volumes:
+      - seq_data:/data
+
+  webapi:
+    image: komvosmind_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: komvosmind_api
+    environment:
+      - ConnectionStrings__GemelliApiDbConnection=${GemelliDb}
+      - ConnectionStrings__TenantDbConnection=${TenantDb}
+      - ConnectionStrings__GemelliApiBlobConnection=${BlobConnection}
+      - ConnectionStrings__GemelliApiBlobContainerName=${BlobContainerName}
+      - Serilog__WriteTo__0__Args__connectionString=${GemelliDb}
+      - Serilog__WriteTo__1__Name=Seq
+      - Serilog__WriteTo__1__Args__serverUrl=http://seq:80
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "5194:5194"
+      - "8080:8080"
+    networks:
+      - komvos_network
+
+  azure-blob:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: azure-blob
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - blob_data:/blob_data
+    networks:
+      - komvos_network
+
+volumes:
+  db_data:
+  db_data_segundo:
+  db_data_terceiro:
+  seq_data:
+  blob_data:
+
+networks:
+  komvos_network:
+    external: true
