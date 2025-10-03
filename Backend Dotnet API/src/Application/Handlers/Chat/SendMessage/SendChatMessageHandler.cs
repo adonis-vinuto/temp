@@ -90,11 +90,6 @@ public class SendChatMessageHandler : BaseHandler
             .Select(file => file.Id.ToString())
             .ToList() ?? new List<string>();
 
-        var historyForService = session.ChatHistory
-            .OrderBy(h => h.CreatedAt)
-            .Select(h => (Role: h.Role == RoleChat.User ? 0 : 1, Content: h.Content))
-            .ToList();
-
         ErrorOr<GemelliAIChatResponse> chatResult = await _gemelliAIService.ChatAsync(new GemelliAIChatRequest
         {
             IdSession = session.Id.ToString(),
@@ -106,7 +101,7 @@ public class SendChatMessageHandler : BaseHandler
             UserEmail = user.Email,
             AgentType = "basic",
             Documents = documentsForService,
-            ChatHistory = historyForService
+            Preferences = CreateDefaultPreferences()
         }, cancellationToken);
 
         if (chatResult.IsError)
@@ -146,4 +141,12 @@ public class SendChatMessageHandler : BaseHandler
             MessageResponse = chatResult.Value.MessageResponse
         };
     }
+
+    private static Dictionary<string, string> CreateDefaultPreferences() => new()
+    {
+        ["agent-personality"] = "Very formal",
+        ["use-emoji"] = "Never",
+        ["response-type"] = "Concise",
+        ["refer-to-user-as"] = "Mr.,Mrs."
+    };
 }
