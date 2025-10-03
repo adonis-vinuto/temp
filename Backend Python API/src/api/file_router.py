@@ -77,9 +77,9 @@ async def extract_and_insert_file(
                 extracted_data = extract_text_from_pdf_bytes(file_content, file.filename)
 
                 qdrant_documents = document_processor.process_file_for_qdrant(extracted_data, id_agent, id_file)
-                    
+
                 insertion_result = qdrant_client.insert_vectors(organization, id_agent, qdrant_documents)
-                            
+
                 return {
                     "message": "File processed and inserted successfully",
                     "file_info": {
@@ -91,11 +91,13 @@ async def extract_and_insert_file(
                         "insertion_result": insertion_result
                     }
                 }
-            
+
+            except RuntimeError as ocr_err:
+                raise HTTPException(status_code=503, detail=str(ocr_err))
             except ConnectionError as conn_err:
                 print(f"Qdrant connection error: {conn_err}")
                 raise HTTPException(
-                    status_code=503, 
+                    status_code=503,
                     detail=f"Qdrant service unavailable. Please check if Qdrant is running. Host: {config.QDRANT_HOST}:{config.QDRANT_PORT}"
                 )
             except Exception as qdrant_err:
