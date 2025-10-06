@@ -1,0 +1,19 @@
+services:
+  blob-init:
+    image: mcr.microsoft.com/azure-cli
+    command: |
+      sh -c '
+        echo "Criando blob container" &&
+        az storage container create \
+          --name gemelli-api \
+          --account-name devstoreaccount1 \
+          --account-key Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw== \
+          --connection-string "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azure-blob:10000/devstoreaccount1;" &&
+        echo "Container criado."
+      '
+    networks:
+      - komvos_network
+
+networks:
+  komvos_network:
+    external: true
