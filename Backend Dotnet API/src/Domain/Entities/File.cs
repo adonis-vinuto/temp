@@ -6,6 +6,7 @@ public sealed class File : BaseEntity
 {
     public Module Module { get; set; }
     public string FileName { get; set; }
+    public string? GeneratedName { get; set; }
     public string? Resume { get; set; }
     public int? CompletionTokens { get; set; }
     public int? PromptTokens { get; set; }

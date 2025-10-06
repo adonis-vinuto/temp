@@ -31,4 +31,10 @@ public interface IGemelliAIClient
         string id_agent,
         string id_file,
         CancellationToken cancellationToken = default);
+
+    [Multipart]
+    [Post("/file/summary")]
+    Task<FileSummaryResponse> SummarizeFileAsync(
+        [AliasAs("file")] StreamPart file,
+        CancellationToken cancellationToken = default);
 }

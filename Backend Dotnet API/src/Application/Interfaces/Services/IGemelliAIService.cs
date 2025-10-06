@@ -20,6 +20,12 @@ public interface IGemelliAIService
         GemelliAIFileRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<ErrorOr<GemelliAIFileResponse>> SummarizeFileAsync(
+        Stream fileStream,
+        string fileName,
+        string contentType,
+        CancellationToken cancellationToken = default);
+
     Task<ErrorOr<bool>> DeleteFileAsync(
         string organization,
         string idAgent,

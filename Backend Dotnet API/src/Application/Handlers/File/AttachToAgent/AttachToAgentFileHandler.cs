@@ -110,6 +110,7 @@ public class AttachToAgentFileHandler : BaseHandler
 
             file.AddAgent(agent);
             file.Resume = aiResponse.Value.Resume;
+            file.GeneratedName = aiResponse.Value.FileName;
             shouldPersist = true;
         }
 
