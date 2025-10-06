@@ -60,7 +60,8 @@ public class SearchSessionByIdAgentHandler : BaseHandler
             .Select(s => new SessionResponse
             {
                 SessionId = s.Id.ToString(),
-                LastSendDate = s.LastSendDate.ToString(CultureInfo.InvariantCulture)
+                LastSendDate = s.LastSendDate.ToString(CultureInfo.InvariantCulture),
+                Title = s.Title
             })
             .ToList();
 

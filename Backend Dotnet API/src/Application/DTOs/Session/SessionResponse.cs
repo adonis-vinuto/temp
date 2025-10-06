@@ -4,4 +4,5 @@ public class SessionResponse
 {
    public string? SessionId { get; set; }
    public string? LastSendDate { get; set; }
+   public string? Title { get; set; }
 }
