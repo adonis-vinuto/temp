@@ -98,7 +98,7 @@ public static class InfrastructureExtensions
         return services;
     }
 
-    public static IServiceCollection AddRefitServices(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddRefitServices(this IServiceCollection services)
     {
         services.AddTransient<AuthHeaderHandler>();
 
