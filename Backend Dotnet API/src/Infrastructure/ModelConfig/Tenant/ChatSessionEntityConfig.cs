@@ -20,9 +20,15 @@ public sealed class ChatSessionConfiguration : IEntityTypeConfiguration<ChatSess
 
         builder.Property(cs => cs.IdAgent)
             .IsRequired();
-        
+
         builder.Property(cs => cs.IdUser)
             .IsRequired();
+
+        builder.Property(cs => cs.IdSession)
+            .HasMaxLength(200);
+
+        builder.Property(cs => cs.Title)
+            .HasMaxLength(400);
 
         builder.HasOne(cs => cs.Agent)
             .WithMany(a => a.Chats)

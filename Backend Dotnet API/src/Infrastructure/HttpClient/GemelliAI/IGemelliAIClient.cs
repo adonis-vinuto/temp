@@ -18,4 +18,9 @@ public interface IGemelliAIClient
         string organization,
         string id_agent,
         CancellationToken cancellationToken = default);
+
+    [Get("/chat/title/{id_session}")]
+    Task<string> GetChatTitleAsync(
+        string id_session,
+        CancellationToken cancellationToken = default);
 }
