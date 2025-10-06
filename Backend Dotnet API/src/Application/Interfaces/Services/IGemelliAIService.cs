@@ -19,6 +19,12 @@ public interface IGemelliAIService
     Task<ErrorOr<GemelliAIFileResponse>> FileAsync(
         GemelliAIFileRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<ErrorOr<bool>> DeleteFileAsync(
+        string organization,
+        string idAgent,
+        string idFile,
+        CancellationToken cancellationToken = default);
 }
 
 public class GemelliAIChatRequest

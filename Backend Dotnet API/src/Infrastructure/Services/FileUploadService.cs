@@ -1,3 +1,4 @@
+using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using ErrorOr;
@@ -6,6 +7,7 @@ using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Azure.Storage.Sas;
+using System.IO;
 
 namespace Infrastructure.Services;
 
@@ -13,6 +15,13 @@ public class FileUploadService : IFileUploadService
 {
     private readonly BlobContainerClient _filesContainer;
     private readonly string _containerName;
+    private static readonly Error BlobNotFoundError = Error.NotFound(
+        code: "File.Blob.NotFound",
+        description: "Arquivo não encontrado no armazenamento.");
+
+    private static readonly Error BlobReadError = Error.Failure(
+        code: "File.Blob.ReadError",
+        description: "Não foi possível abrir o arquivo para leitura.");
 
 
     public FileUploadService(IConfiguration configuration)
@@ -107,5 +116,55 @@ public class FileUploadService : IFileUploadService
             cancellationToken: cancellationToken
         );
         return true;
+    }
+
+    public async Task<ErrorOr<Stream>> OpenReadAsync(string filename, CancellationToken cancellationToken)
+    {
+        BlobClient blobClient = _filesContainer.GetBlobClient(filename);
+
+        if (!await blobClient.ExistsAsync(cancellationToken))
+        {
+            return BlobNotFoundError;
+        }
+
+        try
+        {
+            return await blobClient.OpenReadAsync(cancellationToken: cancellationToken);
+        }
+        catch (NotSupportedException)
+        {
+            return await DownloadAsStreamAsync(blobClient, cancellationToken);
+        }
+        catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.BlobNotFound)
+        {
+            return BlobNotFoundError;
+        }
+        catch (RequestFailedException)
+        {
+            return await DownloadAsStreamAsync(blobClient, cancellationToken);
+        }
+        catch
+        {
+            return BlobReadError;
+        }
+    }
+
+    private static async Task<ErrorOr<Stream>> DownloadAsStreamAsync(
+        BlobClient blobClient,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            BlobDownloadStreamingResult download = await blobClient.DownloadStreamingAsync(cancellationToken: cancellationToken);
+            return download.Content;
+        }
+        catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.BlobNotFound)
+        {
+            return BlobNotFoundError;
+        }
+        catch
+        {
+            return BlobReadError;
+        }
     }
 }

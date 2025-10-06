@@ -6,6 +6,7 @@ using Domain.Enums;
 using Domain.Errors;
 using ErrorOr;
 using Mapster;
+using System.Linq;
 
 namespace Application.Handlers.File.DetachFromAgent;
 
@@ -15,16 +16,19 @@ public class DetachFromAgentFileHandler : BaseHandler
     private readonly IAgentRepository _agentRepository;
     private readonly IAuthenticationService _authenticationService;
     private readonly IModuleService _moduleService;
+    private readonly IGemelliAIService _gemelliAIService;
 
     public DetachFromAgentFileHandler(IFileRepository fileRepository,
         IAuthenticationService authenticationService,
         IModuleService moduleService,
-        IAgentRepository agentRepository)
+        IAgentRepository agentRepository,
+        IGemelliAIService gemelliAIService)
     {
         _fileRepository = fileRepository;
         _authenticationService = authenticationService;
         _moduleService = moduleService;
         _agentRepository = agentRepository;
+        _gemelliAIService = gemelliAIService;
     }
 
     public async Task<ErrorOr<FileResponse>> Handle(DetachFromAgentFileRequest request, Module module, CancellationToken cancellationToken)
@@ -62,6 +66,24 @@ public class DetachFromAgentFileHandler : BaseHandler
 
         if (file.HasAgent(request.IdAgent))
         {
+            string organization = user.Organizations.FirstOrDefault()!;
+
+            ErrorOr<bool> deletionResult = await _gemelliAIService.DeleteFileAsync(
+                organization,
+                agent.Id.ToString(),
+                file.Id.ToString(),
+                cancellationToken);
+
+            if (deletionResult.IsError)
+            {
+                return deletionResult.Errors;
+            }
+
+            if (!deletionResult.Value)
+            {
+                return FileErrors.DeleteFail;
+            }
+
             file.RemoveAgent(agent.Id);
             _fileRepository.Update(file);
             await _fileRepository.UnitOfWork.Commit();
