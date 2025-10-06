@@ -24,4 +24,11 @@ public interface IGemelliAIClient
     Task<string> GetChatTitleAsync(
         string id_session,
         CancellationToken cancellationToken = default);
+
+    [Delete("/file/{organization}/{id_agent}/{id_file}")]
+    Task<FileDeletionResponse> DeleteFileAsync(
+        string organization,
+        string id_agent,
+        string id_file,
+        CancellationToken cancellationToken = default);
 }

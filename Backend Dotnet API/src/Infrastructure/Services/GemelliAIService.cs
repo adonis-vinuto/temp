@@ -118,6 +118,45 @@ public class GemelliAIService : IGemelliAIService
         }
     }
 
+    public async Task<ErrorOr<bool>> DeleteFileAsync(
+        string organization,
+        string idAgent,
+        string idFile,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            FileDeletionResponse response = await _client.DeleteFileAsync(
+                organization ?? string.Empty,
+                idAgent ?? string.Empty,
+                idFile ?? string.Empty,
+                cancellationToken);
+
+            bool deletionSucceeded = response?.Deleted ?? true;
+
+            if (!deletionSucceeded)
+            {
+                string message = !string.IsNullOrWhiteSpace(response?.Message)
+                    ? response!.Message
+                    : "Falha ao deletar arquivo na IA.";
+
+                return Error.Failure("IA.File.Delete.Error", message);
+            }
+
+            return true;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Erro ao chamar IA Delete File API - Status: {StatusCode}", ex.StatusCode);
+            return Error.Failure("IA.File.Delete.Error", $"Erro na API: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro inesperado ao chamar IA Delete File API");
+            return Error.Failure("IA.File.Delete.Error", "Erro inesperado ao processar requisição");
+        }
+    }
+
     public async Task<ErrorOr<string>> GetChatTitleAsync(
         string idSession,
         CancellationToken cancellationToken = default)

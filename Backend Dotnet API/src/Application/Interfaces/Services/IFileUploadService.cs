@@ -1,6 +1,7 @@
 using ErrorOr;
 using Application.Contracts.Response;
 using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace Application.Interfaces.Services;
 
@@ -13,4 +14,5 @@ public interface IFileUploadService
         IFormFile inputFile,
         CancellationToken cancellationToken
     );
+    Task<ErrorOr<Stream>> OpenReadAsync(string filename, CancellationToken cancellationToken);
 }
