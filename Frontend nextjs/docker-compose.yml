@@ -1,0 +1,24 @@
+services:
+  komvosmind_web:
+    image: komvosmind_web
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: komvosmind_web
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: production
+      API_URL: http://komvosmind_api:8080
+      NEXTAUTH_URL: http://144.33.17.76
+      NEXTAUTH_SECRET: e7VeBrp2xDoZp2MyCtgajTujJ73cw/6tvZDPVAx7Jv8=
+      KEYCLOAK_BASE_URL: https://kc.statum.com.br
+      KEYCLOAK_REALM: KomvosMind
+      KEYCLOAK_CLIENT_ID: komvos-mind
+      KEYCLOAK_CLIENT_SECRET: dt9g0MgonlHvDrkHmDY7v22EQ7EfPz86
+    networks:
+      - komvos_network
+
+networks:
+  komvos_network:
+    external: true
