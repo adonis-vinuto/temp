@@ -9,8 +9,58 @@ from ..infrastructure.qdrant.chunck_qdrant import chunk_and_prepare_qdrant
 from ..infrastructure.qdrant.extract_camelot import extract_camelot
 from ..infrastructure.qdrant.text_refiner import text_file_name, text_resume
 from ..domain.file import FileDeletionResponse
+from ..domain.file_summary import FileSummaryResponse
 
 router = APIRouter(prefix="/file", tags=["file"])
+
+
+@router.post("/summary", response_model=FileSummaryResponse)
+async def summarize_file(file: UploadFile = File(...)) -> FileSummaryResponse:
+    document_processor = DocumentProcessor(max_chunk_size=1000)
+
+    try:
+        file_content = await file.read()
+    except Exception as read_err:
+        raise HTTPException(status_code=400, detail="Não foi possível ler o arquivo enviado.") from read_err
+
+    if not file_content:
+        raise HTTPException(status_code=400, detail="Arquivo enviado está vazio.")
+
+    try:
+        extracted_data = await document_processor.extract_text(file_content, file.filename)
+    except ValueError as value_err:
+        raise HTTPException(status_code=400, detail=str(value_err)) from value_err
+    except HTTPException:
+        raise
+    except Exception as extraction_err:
+        raise HTTPException(status_code=500, detail="Erro ao processar o arquivo.") from extraction_err
+
+    needs_fallback = False
+
+    if file.filename.lower().endswith(".pdf"):
+        first_page_text = ""
+        if extracted_data.pages:
+            first_page_text = extracted_data.pages[0].text.strip()
+        if not first_page_text or len(first_page_text) <= 100:
+            needs_fallback = True
+
+    if needs_fallback:
+        try:
+            extracted_data = extract_text_from_pdf_bytes(file_content, file.filename)
+        except ValueError as value_err:
+            raise HTTPException(status_code=400, detail=str(value_err)) from value_err
+        except HTTPException:
+            raise
+        except Exception as fallback_err:
+            raise HTTPException(status_code=500, detail="Erro ao processar o PDF.") from fallback_err
+
+    if not extracted_data.resume.strip():
+        raise HTTPException(status_code=422, detail="Não foi possível extrair um resumo do arquivo enviado.")
+
+    return FileSummaryResponse(
+        file_name=extracted_data.file_name,
+        resume=extracted_data.resume,
+    )
 
 
 @router.get("/health/qdrant", response_model=Dict[str, Any])
