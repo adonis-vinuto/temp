@@ -6,8 +6,6 @@ namespace Application.Handlers.File.Create;
 
 public record CreateFileRequest(
     IFormFile Arquivo,
-    string Organization,
-    string IdAgent,
     Guid? IdFile
 );
 

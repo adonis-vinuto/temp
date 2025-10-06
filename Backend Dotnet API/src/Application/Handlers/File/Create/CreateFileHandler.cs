@@ -15,20 +15,17 @@ public class CreateFileHandler : BaseHandler
     private readonly IModuleService _moduleService;
     private readonly IFileUploadService _fileUploadService;
     private readonly IFileRepository _fileRepository;
-    private readonly IGemelliAIService _gemelliAIService;
 
     public CreateFileHandler(
         IAuthenticationService authenticationService,
         IModuleService moduleService,
         IFileUploadService fileUploadService,
-        IFileRepository fileRepository,
-        IGemelliAIService gemelliAIService)
+        IFileRepository fileRepository)
     {
         _authenticationService = authenticationService;
         _moduleService = moduleService;
         _fileUploadService = fileUploadService;
         _fileRepository = fileRepository;
-        _gemelliAIService = gemelliAIService;
     }
 
     public async Task<ErrorOr<FileResponseModel>> Handle(CreateFileRequest request, Module module, CancellationToken cancellationToken)
@@ -57,21 +54,6 @@ public class CreateFileHandler : BaseHandler
 
         Guid fileId = request.IdFile ?? Guid.NewGuid();
 
-        ErrorOr<GemelliAIFileResponse> documentResult = await _gemelliAIService.FileAsync(
-            new GemelliAIFileRequest {
-                FileStream = request.Arquivo.OpenReadStream(),
-                FileName = request.Arquivo.FileName,
-                Organization = request.Organization ?? string.Empty,
-                IdAgent = request.IdAgent ?? string.Empty,
-                IdFile = fileId.ToString()
-            },
-            cancellationToken);
-
-        if (documentResult.IsError)
-        {
-            return FileErrors.UploadFail;
-        }
-
         ErrorOr<FileResponseModel> arquivo = await _fileUploadService.UploadAsync(request.Arquivo, cancellationToken);
 
         if (arquivo.IsError)
@@ -82,9 +64,9 @@ public class CreateFileHandler : BaseHandler
         await _fileRepository.AddAsync(new Domain.Entities.File()
         {
             Id = fileId,
-            FileName = documentResult.Value.FileName,
+            FileName = arquivo.Value.Name!,
             Module = module,
-            Resume = documentResult.Value.Resume,
+            Resume = null,
         }, cancellationToken);
         await _fileRepository.UnitOfWork.Commit();
 
