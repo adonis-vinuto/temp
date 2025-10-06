@@ -28,7 +28,7 @@ export function ChatSessionList({
       <div className="flex-1 overflow-y-auto space-y-1 p-2">
         {sessions.map((s) => (
           <div
-            key={s.sessionName}
+            key={s.sessionId}
             onClick={() => onSelect(s.sessionId)}
             className={cn(
               "cursor-pointer rounded-md p-2 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
@@ -36,7 +36,7 @@ export function ChatSessionList({
                 "bg-sidebar-accent text-sidebar-accent-foreground"
             )}
           >
-            <div className="font-medium truncate">{s.sessionId}</div>
+            <div className="font-medium truncate">{s.title}</div>
             <div className="text-xs opacity-60">
               {new Date(s.lastSendDate).toLocaleString()}
             </div>

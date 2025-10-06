@@ -20,7 +20,7 @@ export type ChatHistoryItem = z.infer<typeof ChatHistoryItemSchema>;
 export const SessionHistorySchema = z.object({
   sessionId: z.string(),
   lastSendDate: z.string(),
-  sessionName: z.string(),
+  title: z.string(),
   totalInteractions: z.string().optional(),
 });
 

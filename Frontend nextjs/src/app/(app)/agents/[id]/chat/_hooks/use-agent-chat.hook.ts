@@ -57,7 +57,7 @@ export function useAgentChat(
               sessionId: res.sessionId,
               lastSendDate: now,
               totalInteractions: "1",
-              sessionName: "Novo Chat", // sessionName: res.session,
+              title: "Novo Chat",
             },
             ...old,
           ]
