@@ -23,6 +23,22 @@ class QdrantService:
     def delete_vectors(self, tenant_id: str, collection_name: str, point_ids: List[int], wait: bool = True):
         return self.client.delete_vectors(tenant_id, collection_name, point_ids, wait)
 
+    def delete_vectors_by_file(
+        self,
+        tenant_id: str,
+        collection_name: str,
+        id_agent: str,
+        id_file: str,
+        wait: bool = True
+    ):
+        return self.client.delete_vectors_by_filter(
+            tenant_id,
+            collection_name,
+            id_agent,
+            id_file,
+            wait
+        )
+
     def delete_collection(self, tenant_id: str, collection_name: str):
         return self.client.delete_collection(tenant_id, collection_name)
 
