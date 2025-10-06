@@ -93,7 +93,12 @@ public class GemelliAIService : IGemelliAIService
         {
             var filePart = new StreamPart(request.FileStream, request.FileName, "application/octet-stream");
 
-            FileProcessingResponse response = await _client.FileAsync(filePart, request.Organization ?? string.Empty, request.IdAgent ?? string.Empty, cancellationToken);
+            FileProcessingResponse response = await _client.FileAsync(
+                filePart,
+                request.Organization ?? string.Empty,
+                request.IdAgent ?? string.Empty,
+                request.IdFile ?? string.Empty,
+                cancellationToken);
 
             return new GemelliAIFileResponse
             {
