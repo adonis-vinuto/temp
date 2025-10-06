@@ -47,6 +47,9 @@ public static class MapConfig
 
         // AgentChatSessions
         config.NewConfig<ChatSession, AgentChatSessions>()
+            .Map(dest => dest.Id, src => src.Id)
+            .Map(dest => dest.ExternalSessionId, src => src.IdSession)
+            .Map(dest => dest.Title, src => src.Title)
             .Map(dest => dest.MessageResponse, src => src.ChatHistory.LastOrDefault() != null ? src.ChatHistory.LastOrDefault()!.Content : null);
 
         // AgentChatHistory

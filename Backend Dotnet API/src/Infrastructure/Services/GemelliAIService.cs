@@ -112,4 +112,26 @@ public class GemelliAIService : IGemelliAIService
             return Error.Failure("IA.File.Error", "Erro inesperado ao processar requisição");
         }
     }
+
+    public async Task<ErrorOr<string>> GetChatTitleAsync(
+        string idSession,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            string title = await _client.GetChatTitleAsync(idSession, cancellationToken);
+
+            return title ?? string.Empty;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Erro ao obter título do chat - Status: {StatusCode}", ex.StatusCode);
+            return Error.Failure("IA.Chat.Title.Error", $"Erro na API: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro inesperado ao obter título do chat");
+            return Error.Failure("IA.Chat.Title.Error", "Erro inesperado ao processar requisição");
+        }
+    }
 }

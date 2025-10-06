@@ -11,6 +11,10 @@ public interface IGemelliAIService
         GemelliAIChatRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<ErrorOr<string>> GetChatTitleAsync(
+        string idSession,
+        CancellationToken cancellationToken = default);
+
 
     Task<ErrorOr<GemelliAIFileResponse>> FileAsync(
         GemelliAIFileRequest request,

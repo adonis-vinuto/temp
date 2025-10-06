@@ -39,7 +39,10 @@ public class FilePageResponse
 
 public class AgentChatSessions
 {
+    public Guid Id { get; set; }
     public string? MessageResponse { get; set; }
+    public string? ExternalSessionId { get; set; }
+    public string? Title { get; set; }
 }
 
 public class AgentChatHistory

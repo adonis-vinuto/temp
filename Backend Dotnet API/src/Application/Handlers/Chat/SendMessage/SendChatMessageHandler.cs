@@ -93,7 +93,7 @@ public class SendChatMessageHandler : BaseHandler
 
         ErrorOr<GemelliAIChatResponse> chatResult = await _gemelliAIService.ChatAsync(new GemelliAIChatRequest
         {
-            IdSession = session.Id.ToString(),
+            IdSession = session.IdSession,
             IdAgent = agent.Id.ToString(),
             Message = request.Message,
             Module = module.ToString(),
@@ -111,6 +111,11 @@ public class SendChatMessageHandler : BaseHandler
         if (chatResult.IsError)
         {
             return chatResult.Errors;
+        }
+
+        if (!string.IsNullOrWhiteSpace(chatResult.Value.IdSession))
+        {
+            session.IdSession = chatResult.Value.IdSession;
         }
 
         ChatHistoryEntity userHistory = new()
@@ -136,6 +141,19 @@ public class SendChatMessageHandler : BaseHandler
 
         session.TotalInteractions += 1;
         session.LastSendDate = DateTime.UtcNow;
+
+        if (!string.IsNullOrWhiteSpace(session.IdSession) && string.IsNullOrWhiteSpace(session.Title))
+        {
+            ErrorOr<string> chatTitleResult = await _gemelliAIService.GetChatTitleAsync(
+                session.IdSession,
+                cancellationToken);
+
+            if (!chatTitleResult.IsError && !string.IsNullOrWhiteSpace(chatTitleResult.Value))
+            {
+                session.Title = chatTitleResult.Value;
+            }
+        }
+
         _chatSessionRepository.Update(session);
 
         await _chatSessionRepository.UnitOfWork.Commit();

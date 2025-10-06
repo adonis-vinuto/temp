@@ -106,13 +106,26 @@ public class FirstMessageHandler : BaseHandler
             return chatResult.Errors;
         }
 
+        string chatTitle = string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(chatResult.Value.IdSession))
+        {
+            ErrorOr<string> chatTitleResult = await _gemelliAIService.GetChatTitleAsync(
+                chatResult.Value.IdSession,
+                cancellationToken);
+
+            chatTitle = chatTitleResult.IsError ? string.Empty : chatTitleResult.Value;
+        }
+
         ChatSessionEntity session = new()
         {
             IdAgent = agent.Id,
             Agent = agent,
             IdUser = user.IdUser,
             TotalInteractions = 1,
-            LastSendDate = DateTime.UtcNow
+            LastSendDate = DateTime.UtcNow,
+            IdSession = chatResult.Value.IdSession,
+            Title = chatTitle
         };
         await _chatSessionRepository.AddAsync(session, cancellationToken);
 
@@ -142,7 +155,9 @@ public class FirstMessageHandler : BaseHandler
         return new FirstMessageResponse
         {
             MessageResponse = chatResult.Value.MessageResponse,
-            SessionId = session.Id.ToString()
+            SessionId = session.Id.ToString(),
+            ExternalSessionId = session.IdSession ?? string.Empty,
+            Title = session.Title ?? string.Empty
         };
     }
 }
