@@ -10,6 +10,7 @@ using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using GemelliApi.Infrastructure.Services;
 using Refit;
 
@@ -49,6 +50,9 @@ public static class InfrastructureExtensions
 
         IConfigurationSection GemelliApiSection = configuration.GetSection(nameof(GemelliApiSettings));
         services.Configure<GemelliApiSettings>(GemelliApiSection);
+
+        IConfigurationSection gemelliAISettingsSection = configuration.GetSection(nameof(GemelliAISettings));
+        services.Configure<GemelliAISettings>(gemelliAISettingsSection);
 
         IConfigurationSection templateEmailSettingsSection = configuration.GetSection(nameof(TemplateEmailSettings));
         services.Configure<TemplateEmailSettings>(templateEmailSettingsSection);
@@ -96,18 +100,26 @@ public static class InfrastructureExtensions
 
     public static IServiceCollection AddRefitServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<AuthHeaderHandler>();
-        services.AddHttpContextAccessor();
+        services.AddTransient<AuthHeaderHandler>();
 
         // Cliente GemelliAI - SIMPLES
-        string gemelliAIBaseUrl = configuration["GemelliAISettings:BaseUrl"] ?? "";
-
         services.AddRefitClient<IGemelliAIClient>()
-            .ConfigureHttpClient(c =>
+            .ConfigureHttpClient((serviceProvider, client) =>
             {
-                c.BaseAddress = new Uri(gemelliAIBaseUrl);
-                c.Timeout = TimeSpan.FromSeconds(90);
-                c.DefaultRequestHeaders.Add("Accept", "application/json");
+                GemelliAISettings settings =
+                    serviceProvider.GetRequiredService<IOptions<GemelliAISettings>>().Value;
+
+                if (!string.IsNullOrWhiteSpace(settings.BaseUrl))
+                {
+                    client.BaseAddress = new Uri(settings.BaseUrl);
+                }
+
+                client.Timeout = TimeSpan.FromSeconds(settings.TimeoutSeconds);
+
+                if (!client.DefaultRequestHeaders.Contains("Accept"))
+                {
+                    client.DefaultRequestHeaders.Add("Accept", "application/json");
+                }
             })
             .AddHttpMessageHandler<AuthHeaderHandler>();
 
