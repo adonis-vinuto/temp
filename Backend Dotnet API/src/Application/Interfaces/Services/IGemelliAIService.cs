@@ -72,4 +72,5 @@ public class GemelliAIFileRequest
     public string FileName { get; set; } = string.Empty;
     public string Organization { get; set; } = string.Empty;
     public string IdAgent { get; set; } = string.Empty;
+    public string IdFile { get; set; } = string.Empty;
 }

@@ -1,12 +1,14 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using System;
 
 namespace Application.Handlers.File.Create;
 
 public record CreateFileRequest(
     IFormFile Arquivo,
     string Organization,
-    string IdAgent
+    string IdAgent,
+    Guid? IdFile
 );
 
 public class CreateFileRequestValidator : AbstractValidator<CreateFileRequest>

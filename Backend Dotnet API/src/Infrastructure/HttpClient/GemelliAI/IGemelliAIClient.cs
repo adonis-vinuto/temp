@@ -12,11 +12,12 @@ public interface IGemelliAIClient
         CancellationToken cancellationToken = default);
 
     [Multipart]
-    [Post("/file/{organization}/{id_agent}")]
+    [Post("/file/{organization}/{id_agent}/{id_file}")]
     Task<FileProcessingResponse> FileAsync(
         [AliasAs("file")] StreamPart file,
         string organization,
         string id_agent,
+        string id_file,
         CancellationToken cancellationToken = default);
 
     [Get("/chat/title/{id_session}")]

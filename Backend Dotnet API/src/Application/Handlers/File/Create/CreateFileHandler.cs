@@ -5,6 +5,7 @@ using Authentication.Models;
 using Domain.Enums;
 using Domain.Errors;
 using ErrorOr;
+using System;
 
 namespace Application.Handlers.File.Create;
 
@@ -54,12 +55,15 @@ public class CreateFileHandler : BaseHandler
             return FileErrors.NotFound; 
         }
 
+        Guid fileId = request.IdFile ?? Guid.NewGuid();
+
         ErrorOr<GemelliAIFileResponse> documentResult = await _gemelliAIService.FileAsync(
-            new GemelliAIFileRequest { 
-                FileStream = request.Arquivo.OpenReadStream(), 
+            new GemelliAIFileRequest {
+                FileStream = request.Arquivo.OpenReadStream(),
                 FileName = request.Arquivo.FileName,
                 Organization = request.Organization ?? string.Empty,
-                IdAgent = request.IdAgent ?? string.Empty
+                IdAgent = request.IdAgent ?? string.Empty,
+                IdFile = fileId.ToString()
             },
             cancellationToken);
 
@@ -77,6 +81,7 @@ public class CreateFileHandler : BaseHandler
 
         await _fileRepository.AddAsync(new Domain.Entities.File()
         {
+            Id = fileId,
             FileName = documentResult.Value.FileName,
             Module = module,
             Resume = documentResult.Value.Resume,
