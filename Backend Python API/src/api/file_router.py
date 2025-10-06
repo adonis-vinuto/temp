@@ -3,6 +3,7 @@ from typing import Dict, Any
 import traceback
 from ..infrastructure.qdrant.document_processor import DocumentProcessor
 from ..infrastructure.qdrant.qdrant_service import QdrantService
+from ..infrastructure.qdrant.naming import format_collection_name
 from ..infrastructure.configs import config
 from ..application.pdf_service import extract_text_from_pdf_bytes
 from ..infrastructure.qdrant.chunck_qdrant import chunk_and_prepare_qdrant
@@ -122,14 +123,19 @@ async def extract_and_insert_file(
     extracted_data = await document_processor.extract_text(file_content, file.filename)
 
     try:
+        collection_name = format_collection_name(id_agent, id_file)
+    except ValueError as value_err:
+        raise HTTPException(status_code=400, detail=str(value_err)) from value_err
+
+    try:
         if (len(extracted_data.pages[0].text) <= 100):
             try:
 
                 extracted_data = extract_text_from_pdf_bytes(file_content, file.filename)
 
                 qdrant_documents = document_processor.process_file_for_qdrant(extracted_data, id_agent, id_file)
-                    
-                insertion_result = qdrant_client.insert_vectors(organization, id_agent, qdrant_documents)
+
+                insertion_result = qdrant_client.insert_vectors(organization, collection_name, qdrant_documents)
                             
                 return {
                     "message": "File processed and inserted successfully",
@@ -174,7 +180,7 @@ async def extract_and_insert_file(
                     file_name=file.filename
                 )
 
-                insertion_result = qdrant_client.insert_vectors(organization, id_agent, qdrant_documents)
+                insertion_result = qdrant_client.insert_vectors(organization, collection_name, qdrant_documents)
 
                 return {
                     "message": "File processed and inserted successfully",
@@ -225,9 +231,15 @@ async def delete_file_vectors(
     )
 
     try:
+        collection_name = format_collection_name(id_agent, id_file)
+    except ValueError as value_err:
+        raise HTTPException(status_code=400, detail=str(value_err)) from value_err
+
+    try:
+
         deletion_result = qdrant_client.delete_vectors_by_file(
             tenant_id=organization,
-            collection_name=id_agent,
+            collection_name=collection_name,
             id_agent=id_agent,
             id_file=id_file
         )

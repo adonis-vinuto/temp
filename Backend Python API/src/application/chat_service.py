@@ -4,6 +4,7 @@ from uuid import uuid4
 from langchain.schema import AIMessage, HumanMessage
  
 from ..domain.chat import ChatRequest, ChatResponse, UserInfo, AgentState, Document
+from ..infrastructure.qdrant.naming import format_collection_name
 from ..infrastructure.usage_callback import UsageCallback
 from .agents.agent_graph import graph_builder
 from ..infrastructure.checkpointer import create_async_mysql_checkpointer
@@ -45,9 +46,16 @@ class ChatService:
         )
 
         if request.documents is not None:
+            collection_name = ""
+            if request.documents:
+                try:
+                    collection_name = format_collection_name(request.id_agent, request.documents[0])
+                except ValueError:
+                    collection_name = ""
+
             doc = Document(
                 tenant_id=request.organization,
-                collection_name=request.id_agent,
+                collection_name=collection_name,
                 id_file=request.documents
             )
         else:
