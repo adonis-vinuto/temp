@@ -1,27 +1,37 @@
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Infrastructure.Contracts.GemelliAI.Response;
 
 public class ChatResponse
 {
+    [JsonPropertyName("id_session")]
+    public string IdSession { get; set; } = string.Empty;
+
     [JsonPropertyName("message-response")]
     public string MessageResponse { get; set; } = string.Empty;
 
     [JsonPropertyName("usage")]
-    public Usage Usage { get; set; } = new();
+    public ChatUsage Usage { get; set; } = new();
 }
 
-public class Usage
+public class ChatUsage
 {
-    [JsonPropertyName("model-name")]
-    public string ModelName { get; set; } = string.Empty;
+    [JsonPropertyName("usage_breakdown_by_model")]
+    public Dictionary<string, ChatUsageMetrics> UsageBreakdownByModel { get; set; } = new();
 
-    [JsonPropertyName("input-tokens")]
+    [JsonPropertyName("grand_total_usage")]
+    public ChatUsageMetrics GrandTotalUsage { get; set; } = new();
+}
+
+public class ChatUsageMetrics
+{
+    [JsonPropertyName("input_tokens")]
     public int InputTokens { get; set; }
 
-    [JsonPropertyName("output-tokens")]
+    [JsonPropertyName("output_tokens")]
     public int OutputTokens { get; set; }
 
-    [JsonPropertyName("total-tokens")]
+    [JsonPropertyName("total_tokens")]
     public int TotalTokens { get; set; }
 }
