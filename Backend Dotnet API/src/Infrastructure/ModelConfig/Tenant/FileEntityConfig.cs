@@ -24,6 +24,10 @@ public sealed class FileConfiguration : IEntityTypeConfiguration<FileEntity>
             .IsRequired()
             .HasMaxLength(1000);
 
+        builder.Property(x => x.GeneratedName)
+            .IsRequired(false)
+            .HasMaxLength(1000);
+
         builder.Property(x => x.CompletionTokens)
             .IsRequired(false);
 

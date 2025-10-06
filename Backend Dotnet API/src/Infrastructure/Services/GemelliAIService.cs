@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Refit;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 
 namespace Infrastructure.Services;
 
@@ -115,6 +116,40 @@ public class GemelliAIService : IGemelliAIService
         {
             _logger.LogError(ex, "Erro inesperado ao chamar IA File API");
             return Error.Failure("IA.File.Error", "Erro inesperado ao processar requisição");
+        }
+    }
+
+    public async Task<ErrorOr<GemelliAIFileResponse>> SummarizeFileAsync(
+        Stream fileStream,
+        string fileName,
+        string contentType,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            string resolvedContentType = string.IsNullOrWhiteSpace(contentType)
+                ? "application/octet-stream"
+                : contentType;
+
+            var filePart = new StreamPart(fileStream, fileName, resolvedContentType);
+
+            FileSummaryResponse response = await _client.SummarizeFileAsync(filePart, cancellationToken);
+
+            return new GemelliAIFileResponse
+            {
+                FileName = response.FileName,
+                Resume = response.Resume
+            };
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Erro ao chamar IA File Summary API - Status: {StatusCode}", ex.StatusCode);
+            return Error.Failure("IA.File.Summary.Error", $"Erro na API: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro inesperado ao chamar IA File Summary API");
+            return Error.Failure("IA.File.Summary.Error", "Erro inesperado ao processar requisição");
         }
     }
 
