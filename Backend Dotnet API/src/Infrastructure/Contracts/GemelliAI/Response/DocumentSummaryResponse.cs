@@ -14,5 +14,17 @@ public class DocumentSummaryResponse
     public string ResumeFile { get; set; } = string.Empty;
 
     [JsonPropertyName("usage")]
-    public Usage Usage { get; set; } = new();
+    public DocumentSummaryUsage Usage { get; set; } = new();
+}
+
+public class DocumentSummaryUsage
+{
+    [JsonPropertyName("input_tokens")]
+    public int InputTokens { get; set; }
+
+    [JsonPropertyName("output_tokens")]
+    public int OutputTokens { get; set; }
+
+    [JsonPropertyName("total_tokens")]
+    public int TotalTokens { get; set; }
 }

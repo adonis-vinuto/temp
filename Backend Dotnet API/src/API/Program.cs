@@ -67,7 +67,7 @@ builder
     .AddAuthenticationServices()
     .AddRepositoriesServices()
     .AddInfrastructureServices(builder.Configuration)
-    .AddRefitServices(builder.Configuration);
+    .AddRefitServices();
 
 WebApplication app = builder.Build();
 
