@@ -167,10 +167,10 @@ class QdrantRepository:
             raise
 
     def delete_vectors(
-            self, 
-            tenant_id: str, 
-            collection_name: str, 
-            point_ids: List[int], 
+            self,
+            tenant_id: str,
+            collection_name: str,
+            point_ids: List[int],
             wait: bool = True):
         if not self.collection_exists(tenant_id, collection_name):
             raise ValueError(f"Collection '{collection_name}' does not exist for tenant '{tenant_id}'.")
@@ -190,6 +190,60 @@ class QdrantRepository:
 
         except Exception as e:
             logger.error(f"Failed to delete vectors from collection '{collection_name}': {e}")
+            raise
+
+    def delete_vectors_by_filter(
+            self,
+            tenant_id: str,
+            collection_name: str,
+            id_agent: str,
+            id_file: str,
+            wait: bool = True) -> Dict[str, Any]:
+        if not self.collection_exists(tenant_id, collection_name):
+            raise ValueError(f"Collection '{collection_name}' does not exist for tenant '{tenant_id}'.")
+
+        full_name = self.collection_name(tenant_id, collection_name)
+
+        payload_filter = models.Filter(
+            must=[
+                models.FieldCondition(
+                    key="metadata.id_agent",
+                    match=models.MatchValue(value=id_agent)
+                ),
+                models.FieldCondition(
+                    key="metadata.id_file",
+                    match=models.MatchValue(value=id_file)
+                )
+            ]
+        )
+
+        try:
+            count_result = self.client.count(
+                collection_name=full_name,
+                filter=payload_filter,
+                exact=True
+            )
+
+            delete_result = self.client.delete(
+                collection_name=full_name,
+                filter=payload_filter,
+                wait=wait
+            )
+
+            status_value = delete_result.status.value if hasattr(delete_result.status, "value") else str(delete_result.status)
+
+            return {
+                "status": status_value,
+                "operation_id": delete_result.operation_id,
+                "deleted_count": getattr(count_result, "count", 0)
+            }
+
+        except Exception as e:
+            logger.error(
+                "Failed to delete vectors by filter from collection '%s': %s",
+                collection_name,
+                e
+            )
             raise
     
     def search_vectors(

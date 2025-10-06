@@ -8,6 +8,7 @@ from ..application.pdf_service import extract_text_from_pdf_bytes
 from ..infrastructure.qdrant.chunck_qdrant import chunk_and_prepare_qdrant
 from ..infrastructure.qdrant.extract_camelot import extract_camelot
 from ..infrastructure.qdrant.text_refiner import text_file_name, text_resume
+from ..domain.file import FileDeletionResponse
 
 router = APIRouter(prefix="/file", tags=["file"])
 
@@ -53,8 +54,8 @@ async def check_qdrant_connection() -> Dict[str, Any]:
 
 @router.post("/{organization}/{id_agent}/{id_file}", response_model=Dict[str, Any])
 async def extract_and_insert_file(
-    organization: str, 
-    id_agent: str, 
+    organization: str,
+    id_agent: str,
     id_file: str,
     file: UploadFile = File(...)) -> Dict[str, Any]:
 
@@ -158,3 +159,40 @@ async def extract_and_insert_file(
         print(f"General error processing file: {e}")
         print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
+
+@router.delete("/{organization}/{id_agent}/{id_file}", response_model=FileDeletionResponse)
+async def delete_file_vectors(
+    organization: str,
+    id_agent: str,
+    id_file: str
+) -> FileDeletionResponse:
+
+    qdrant_client = QdrantService(
+        host=config.QDRANT_HOST,
+        port=config.QDRANT_PORT,
+        api_key=config.QDRANT_API_KEY
+    )
+
+    try:
+        deletion_result = qdrant_client.delete_vectors_by_file(
+            tenant_id=organization,
+            collection_name=id_agent,
+            id_agent=id_agent,
+            id_file=id_file
+        )
+
+        return FileDeletionResponse(**deletion_result)
+
+    except ConnectionError as conn_err:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Qdrant service unavailable. Host: {config.QDRANT_HOST}:{config.QDRANT_PORT}. Error: {conn_err}"
+        ) from conn_err
+    except ValueError as value_err:
+        raise HTTPException(status_code=404, detail=str(value_err)) from value_err
+    except Exception as qdrant_err:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error deleting file vectors: {qdrant_err}"
+        ) from qdrant_err
