@@ -5,6 +5,8 @@ using Infrastructure.Contracts.GemelliAI.Response;
 using Infrastructure.HttpClient.GemelliAI;
 using Microsoft.Extensions.Logging;
 using Refit;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Infrastructure.Services;
 
@@ -29,34 +31,46 @@ public class GemelliAIService : IGemelliAIService
         {
             var apiRequest = new ChatRequest
             {
+                IdSession = string.IsNullOrWhiteSpace(request.IdSession) ? null : request.IdSession,
+                IdAgent = request.IdAgent,
                 Message = request.Message,
-                Module = request.Module.ToString(),
+                Module = request.Module,
                 Organization = request.Organization,
                 User = new ChatUser
                 {
-                    Name = request.UserName,
-                    Email = request.UserEmail
+                    Name = request.User.Name,
+                    Email = request.User.Email
                 },
-                AgentType = request.AgentType,
-                Files = request.Files.Select(f => new ChatFile
-                {
-                    Name = f.Name,
-                    Content = f.Content
-                }).ToList(),
-                ChatHistory = request.ChatHistory.Select(h => new ChatHistoryItem
-                {
-                    Role = h.Role,
-                    Content = h.Content
-                }).ToList()
+                Preferences = request.Preferences ?? new Dictionary<string, string>(),
+                Documents = request.Documents?.Where(documentId => !string.IsNullOrWhiteSpace(documentId)).ToList() ?? new List<string>(),
+                AgentType = request.AgentType
             };
 
             ChatResponse response = await _client.ChatAsync(apiRequest, cancellationToken);
 
             return new GemelliAIChatResponse
             {
+                IdSession = response.IdSession,
                 MessageResponse = response.MessageResponse,
-                ModelName = response.Usage.ModelName,
-                TotalTokens = response.Usage.TotalTokens
+                Usage = new GemelliAIChatUsage
+                {
+                    UsageBreakdownByModel = response.Usage?.UsageBreakdownByModel?.ToDictionary(
+                        usage => usage.Key,
+                        usage => new GemelliAIChatUsageBreakdown
+                        {
+                            InputTokens = usage.Value.InputTokens,
+                            OutputTokens = usage.Value.OutputTokens,
+                            TotalTokens = usage.Value.TotalTokens
+                        }) ?? new Dictionary<string, GemelliAIChatUsageBreakdown>(),
+                    GrandTotalUsage = response.Usage?.GrandTotalUsage is { } grandTotal
+                        ? new GemelliAIChatUsageBreakdown
+                        {
+                            InputTokens = grandTotal.InputTokens,
+                            OutputTokens = grandTotal.OutputTokens,
+                            TotalTokens = grandTotal.TotalTokens
+                        }
+                        : new GemelliAIChatUsageBreakdown()
+                }
             };
         }
         catch (ApiException ex)
