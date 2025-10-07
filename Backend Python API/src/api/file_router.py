@@ -1,24 +1,19 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from typing import Dict, Any
 import traceback
-from ..infrastructure.qdrant.document_processor import DocumentProcessor
 from ..infrastructure.qdrant.qdrant_service import QdrantService
 from ..infrastructure.qdrant.naming import format_collection_name
 from ..infrastructure.configs import config
-from ..application.pdf_service import extract_text_from_pdf_bytes
-from ..infrastructure.qdrant.chunck_qdrant import chunk_and_prepare_qdrant
-from ..infrastructure.qdrant.extract_camelot import extract_camelot
-from ..infrastructure.qdrant.text_refiner import text_file_name, text_resume
 from ..domain.file import FileDeletionResponse
 from ..domain.file_summary import FileSummaryResponse
+from ..infrastructure.qdrant.smart_document_extractor import extract_file_content_from_bytes
+from ..infrastructure.qdrant.parse_qdrant_data import parse_qdrant_data
 
 router = APIRouter(prefix="/file", tags=["file"])
 
 
 @router.post("/summary", response_model=FileSummaryResponse)
 async def summarize_file(file: UploadFile = File(...)) -> FileSummaryResponse:
-    document_processor = DocumentProcessor(max_chunk_size=1000)
-
     try:
         file_content = await file.read()
     except Exception as read_err:
@@ -28,7 +23,7 @@ async def summarize_file(file: UploadFile = File(...)) -> FileSummaryResponse:
         raise HTTPException(status_code=400, detail="Arquivo enviado está vazio.")
 
     try:
-        extracted_data = await document_processor.extract_text(file_content, file.filename)
+        extracted_data, usage_data = extract_file_content_from_bytes(file_content, file.filename)
     except ValueError as value_err:
         raise HTTPException(status_code=400, detail=str(value_err)) from value_err
     except HTTPException:
@@ -47,7 +42,7 @@ async def summarize_file(file: UploadFile = File(...)) -> FileSummaryResponse:
 
     if needs_fallback:
         try:
-            extracted_data = extract_text_from_pdf_bytes(file_content, file.filename)
+            extracted_data, usage_data = extract_file_content_from_bytes(file_content, file.filename)
         except ValueError as value_err:
             raise HTTPException(status_code=400, detail=str(value_err)) from value_err
         except HTTPException:
@@ -116,106 +111,47 @@ async def extract_and_insert_file(
         api_key=config.QDRANT_API_KEY
     )
 
-    document_processor = DocumentProcessor(max_chunk_size=1000)
-
     file_content = await file.read()
 
-    extracted_data = await document_processor.extract_text(file_content, file.filename)
-
     try:
-        collection_name = format_collection_name(id_agent, id_file)
+        collection_name = format_collection_name(organization, id_agent, id_file)
     except ValueError as value_err:
         raise HTTPException(status_code=400, detail=str(value_err)) from value_err
 
     try:
-        if (len(extracted_data.pages[0].text) <= 100):
-            try:
 
-                extracted_data = extract_text_from_pdf_bytes(file_content, file.filename)
+        extracted_data, usage_data = extract_file_content_from_bytes(file_content, file.filename)
 
-                qdrant_documents = document_processor.process_file_for_qdrant(extracted_data, id_agent, id_file)
+        parsed_data = parse_qdrant_data(extracted_data, id_agent, id_file)
 
-                insertion_result = qdrant_client.insert_vectors(organization, collection_name, qdrant_documents)
-                            
-                return {
-                    "message": "File processed and inserted successfully",
-                    "file_info": {
-                        "file_name": extracted_data.file_name,
-                        "resume": extracted_data.resume,
-                    },
-                    "qdrant_info": {
-                        "documents_inserted": len(qdrant_documents),
-                        "insertion_result": insertion_result
-                    }
-                }
-            
-            except ConnectionError as conn_err:
-                print(f"Qdrant connection error: {conn_err}")
-                raise HTTPException(
-                    status_code=503, 
-                    detail=f"Qdrant service unavailable. Please check if Qdrant is running. Host: {config.QDRANT_HOST}:{config.QDRANT_PORT}"
-                )
-            except Exception as qdrant_err:
-                print(f"Qdrant operation error: {qdrant_err}")
-                print(f"Traceback: {traceback.format_exc()}")
-                raise HTTPException(
-                    status_code=500, 
-                    detail=f"Error with Qdrant operations: {str(qdrant_err)}"
-                )
+        insertion_result = qdrant_client.insert_vectors(organization, collection_name, parsed_data)
 
-        else:            
-            try:
-
-                extracted_pages = extract_camelot(file_content)
-
-                resume = text_resume(extracted_pages)
-                
-                file_name = text_file_name(extracted_pages)
-
-                qdrant_documents = chunk_and_prepare_qdrant(
-                    pages=extracted_pages,
-                    id_agent=id_agent,
-                    id_file=id_file,
-                    file_type="pdf",
-                    file_name=file.filename
-                )
-
-                insertion_result = qdrant_client.insert_vectors(organization, collection_name, qdrant_documents)
-
-                return {
-                    "message": "File processed and inserted successfully",
-                    "file_info": {
-                        "file_name": file_name,
-                        "resume": resume,
-                    },
-                    "qdrant_info": {
-                        "documents_inserted": len(qdrant_documents),
-                        "insertion_result": insertion_result
-                    }
-                }
-            
-            except ConnectionError as conn_err:
-                print(f"Qdrant connection error: {conn_err}")
-                raise HTTPException(
-                    status_code=503, 
-                    detail=f"Qdrant service unavailable. Please check if Qdrant is running. Host: {config.QDRANT_HOST}:{config.QDRANT_PORT}"
-                )
-            except Exception as qdrant_err:
-                print(f"Qdrant operation error: {qdrant_err}")
-                print(f"Traceback: {traceback.format_exc()}")
-                raise HTTPException(
-                    status_code=500, 
-                    detail=f"Error with Qdrant operations: {str(qdrant_err)}"
-                )
+        return {
+            "message": "File processed and inserted successfully",
+            "file_info": {
+                "file_name": extracted_data.file_name,
+                "resume": extracted_data.resume,
+            },
+            "qdrant_info": {
+                "documents_inserted": len(parsed_data),
+                "insertion_result": insertion_result
+            },
+            "usage": usage_data
+        }
     
-    except HTTPException:
-        raise
-
-    except Exception as e:
-        print(f"General error processing file: {e}")
+    except ConnectionError as conn_err:
+        print(f"Qdrant connection error: {conn_err}")
+        raise HTTPException(
+            status_code=503, 
+            detail=f"Qdrant service unavailable. Please check if Qdrant is running. Host: {config.QDRANT_HOST}:{config.QDRANT_PORT}"
+        )
+    except Exception as qdrant_err:
+        print(f"Qdrant operation error: {qdrant_err}")
         print(f"Traceback: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
-
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error with Qdrant operations: {str(qdrant_err)}"
+        )
 
 @router.delete("/{organization}/{id_agent}/{id_file}", response_model=FileDeletionResponse)
 async def delete_file_vectors(
@@ -231,7 +167,7 @@ async def delete_file_vectors(
     )
 
     try:
-        collection_name = format_collection_name(id_agent, id_file)
+        collection_name = format_collection_name(organization, id_agent, id_file)
     except ValueError as value_err:
         raise HTTPException(status_code=400, detail=str(value_err)) from value_err
 

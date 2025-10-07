@@ -58,6 +58,7 @@ def create_document_rag_tool(tenant_id: str, collection_name: str, documents: Do
             }
  
             response = qdrant_client.search_vectors(**search_kwargs)
+            print(f"--- RAG Resultados: {len(response)} documentos encontrados ---")
             return response
  
         except Exception as e:

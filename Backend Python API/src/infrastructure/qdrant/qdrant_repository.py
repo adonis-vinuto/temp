@@ -29,23 +29,13 @@ class QdrantRepository:
         except Exception as e:
             logger.error(f"Failed to connect to Qdrant: {e}")
             raise
-    
-    def collection_name(
-            self, 
-            tenant_id: str, 
-            base_name: str) -> str:
-        tenant_id = tenant_id.lower()
-        base_name = base_name.lower()
-        return f"{tenant_id}_{base_name}"
 
     def collection_exists(
             self, 
             tenant_id: str, 
             collection_name: str) -> bool:
-        try:
-            full_name = self.collection_name(tenant_id, collection_name)
-            
-            return self.client.get_collection(full_name) is not None
+        try:   
+            return self.client.get_collection(collection_name) is not None
         
         except UnexpectedResponse as e:
             if e.status_code == 404:
@@ -62,10 +52,9 @@ class QdrantRepository:
         if not self.collection_exists(tenant_id, collection_name):
 
             try:
-                full_name = self.collection_name(tenant_id, collection_name)
-
+                
                 self.client.recreate_collection(
-                    collection_name=full_name,
+                    collection_name=collection_name,
                     vectors_config=VectorParams(size=dimension, distance=distance)
                 )
 
@@ -86,7 +75,7 @@ class QdrantRepository:
         if self.collection_exists(tenant_id, collection_name):
         
             try:
-                self.client.delete_collection(self.collection_name(tenant_id, collection_name))
+                self.client.delete_collection(collection_name)
                 logger.info(f"Collection '{collection_name}' deleted successfully.")
 
             except Exception as e:
@@ -128,39 +117,33 @@ class QdrantRepository:
             if not self.collection_exists(tenant_id, collection_name):
                 self.create_collection(tenant_id, collection_name, dimension=1536)
 
-            full_name = self.collection_name(tenant_id, collection_name)
             
             points = []
 
             for doc in documents:
                 if hasattr(doc, 'dict'):
                     doc_dict = doc.dict()
-
-                    point = PointStruct(
-                        id=doc_dict["id"],
-                        vector=doc_dict["vector"],
-                        payload={
-                            "text": doc_dict["text"],
-                            "metadata": doc_dict["metadata"],
-                            "tenant_id": tenant_id
-                        }
-                    )
-
                 else:
-                    point = PointStruct(
-                        id=doc["id"],
-                        vector=doc["vector"],
-                        payload=doc.get("payload", {})
-                    )
+                    doc_dict = doc
+
+                point = PointStruct(
+                    id=doc_dict["id"],
+                    vector=doc_dict["vector"],
+                    payload={
+                        "text": doc_dict["text"],
+                        "metadata": doc_dict["metadata"],
+                        "tenant_id": tenant_id
+                    }
+                )
 
                 points.append(point)
             
             self.client.upsert(
-                collection_name=full_name,
+                collection_name=collection_name,
                 points=points
             )
             
-            logger.info(f"Inseridos {len(points)} documentos na collection '{full_name}'")
+            logger.info(f"Inseridos {len(points)} documentos na collection '{collection_name}'")
             
         except Exception as e:
             logger.error(f"Erro ao inserir vetores: {e}")
@@ -175,17 +158,16 @@ class QdrantRepository:
         if not self.collection_exists(tenant_id, collection_name):
             raise ValueError(f"Collection '{collection_name}' does not exist for tenant '{tenant_id}'.")
 
-        full_name = self.collection_name(tenant_id, collection_name)
 
         try:
             self.client.delete(
-                collection_name=full_name,
+                collection_name=collection_name,
                 points=point_ids
             )
             logger.info(f"Deleted points from collection '{collection_name}'.")
 
             if wait:
-                self.client.wait_for_collection(full_name)
+                self.client.wait_for_collection(collection_name)
                 logger.info(f"All deletions processed in collection '{collection_name}'.")
 
         except Exception as e:
@@ -210,11 +192,10 @@ class QdrantRepository:
         if not self.collection_exists(tenant_id, collection_name):
             raise ValueError(f"Collection '{collection_name}' does not exist for tenant '{tenant_id}'.")
 
-        full_name = self.collection_name(tenant_id, collection_name)
 
         try:
             # Conta pontos existentes (exato) para reportar no retorno
-            count_resp = self.client.count(collection_name=full_name, exact=True)
+            count_resp = self.client.count(collection_name=collection_name, exact=True)
 
             # Extrai o número de pontos de forma resiliente a diferentes formatos
             deleted_count = 0
@@ -228,7 +209,7 @@ class QdrantRepository:
             timeout_sec = 60 if wait else None
 
             delete_resp = self.client.delete_collection(
-                collection_name=full_name,
+                collection_name=collection_name,
                 timeout=timeout_sec
             )
 
@@ -250,13 +231,13 @@ class QdrantRepository:
                 "status": status_value,
                 "operation_id": operation_id,
                 "deleted_count": deleted_count,
-                "collection": full_name,
+                "collection": collection_name,
             }
 
         except Exception as e:
             logger.error(
                 "Failed to delete collection '%s': %s",
-                full_name,
+                collection_name,
                 e
             )
             raise
@@ -270,11 +251,10 @@ class QdrantRepository:
         top_k: int = 10, 
         filter: Optional[List[Dict[str, Any]]] = None
     ):
-        full_name = self.collection_name(tenant_id, collection_name)
         
         try:
             search_params = {
-                "collection_name": full_name,
+                "collection_name": collection_name,
                 "query_vector": query_vector,
                 "limit": top_k
             }

@@ -50,10 +50,10 @@ def graph_builder(checkpointer = None):
     builder = StateGraph(AgentState)
     builder.add_node("route", route_node)
     builder.add_node("people", people_node)
-    builder.add_node("sales", sales_node)
-    builder.add_node("finance", finance_node)
-    builder.add_node("support", support_node)
-    builder.add_node("tax", tax_node)
+    builder.add_node("sales", people_node)
+    builder.add_node("finance", people_node)
+    builder.add_node("support", people_node)
+    builder.add_node("tax", people_node)
 
     builder.set_entry_point("route")
     

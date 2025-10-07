@@ -10,7 +10,7 @@ recognition.
 from __future__ import annotations
 
 import io
-from typing import List
+from typing import List, Tuple, Dict, Any
 
 import pypdfium2 as pdfium
 import pytesseract
@@ -18,6 +18,7 @@ import pytesseract
 from src.domain.extract_text_schema import FileSchema, PageSchema
 
 from ..infrastructure.qdrant.text_refiner import text_resume, text_file_name
+from ..infrastructure.simple_usage_callback import SimpleUsageCallback
 
 def _extract_file_type(filename: str) -> str:
         if '.' in filename:
@@ -25,7 +26,7 @@ def _extract_file_type(filename: str) -> str:
     
         return "unknown"
 
-def extract_text_from_pdf_bytes(pdf_bytes: bytes, filename: str):
+def extract_text_from_pdf_bytes(pdf_bytes: bytes, filename: str) -> Tuple[FileSchema, Dict[str, Any]]:
     """Extract text from PDF bytes.
 
     The function first attempts to extract embedded text using ``pypdfium2``. If
@@ -36,10 +37,11 @@ def extract_text_from_pdf_bytes(pdf_bytes: bytes, filename: str):
         pdf_bytes: Raw bytes of a PDF file.
 
     Returns:
-        FileSchema with pages as PageSchema objects.
+        Tuple with FileSchema and usage dict.
     """
 
     file_type = _extract_file_type(filename)
+    usage_callback = SimpleUsageCallback()
 
     pdf = pdfium.PdfDocument(io.BytesIO(pdf_bytes))
     raw_pages: List[dict] = []
@@ -80,9 +82,9 @@ def extract_text_from_pdf_bytes(pdf_bytes: bytes, filename: str):
         for p in raw_pages
     ]
 
-    resume = text_resume(page_schemas, tamanho_maximo=1000)
+    resume = text_resume(page_schemas, usage_callback, tamanho_maximo=1000)
 
-    filename_res = text_file_name(page_schemas, tamanho_maximo=100)
+    filename_res = text_file_name(page_schemas, usage_callback, tamanho_maximo=100)
 
     file_schema = FileSchema(
             file_name=filename_res,
@@ -91,5 +93,5 @@ def extract_text_from_pdf_bytes(pdf_bytes: bytes, filename: str):
             pages=page_schemas
         )
 
-    return file_schema
+    return file_schema, usage_callback.get_usage_dict()
 

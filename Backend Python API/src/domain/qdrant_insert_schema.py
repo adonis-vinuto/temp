@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
+from pydantic import BaseModel, Field
+from typing import List
 from uuid import uuid4
 
 class QdrantMetadata(BaseModel):
@@ -10,7 +10,7 @@ class QdrantMetadata(BaseModel):
     page_number: int  
 
 class QdrantInsertSchema(BaseModel):
-    id: str = str(uuid4())
+    id: str = Field(default_factory=lambda: str(uuid4()))
     vector: List[float]
     text: str
     metadata: QdrantMetadata

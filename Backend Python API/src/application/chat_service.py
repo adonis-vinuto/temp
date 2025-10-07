@@ -49,7 +49,7 @@ class ChatService:
             collection_name = ""
             if request.documents:
                 try:
-                    collection_name = format_collection_name(request.id_agent, request.documents[0])
+                    collection_name = format_collection_name(request.organization, request.id_agent, request.documents[0])
                 except ValueError:
                     collection_name = ""
 

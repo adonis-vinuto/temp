@@ -1,6 +1,7 @@
-from typing import List, Union
+from typing import List, Union, Tuple, Dict, Any
 from langchain_groq import ChatGroq
 from ..configs import config
+from ..simple_usage_callback import SimpleUsageCallback
         
 llm = ChatGroq(
     api_key=config.GROQ_API_KEY,
@@ -8,12 +9,13 @@ llm = ChatGroq(
     temperature=0.3
 )
 
-def text_resume(pages: Union[List, str], tamanho_maximo: int = 1000, limite_texto: int = 4000) -> str:
+def text_resume(pages: Union[List, str], usage_callback: SimpleUsageCallback, tamanho_maximo: int = 1000, limite_texto: int = 4000) -> str:
     """
     Resume um texto limitando a entrada a um número específico de caracteres
     
     Args:
         pages: Páginas do documento (lista de objetos com .text) ou string direta
+        usage_callback: Callback compartilhado para rastrear usage
         tamanho_maximo: Tamanho máximo do resumo em caracteres
         limite_texto: Limite máximo de caracteres do texto de entrada
         
@@ -58,15 +60,16 @@ def text_resume(pages: Union[List, str], tamanho_maximo: int = 1000, limite_text
     Resumo:
     """
     
-    response = llm.invoke(prompt)
+    response = llm.invoke(prompt, config={"callbacks": [usage_callback]})
     return response.content.strip()
 
-def text_file_name(pages: Union[List, str], tamanho_maximo: int = 100, limite_texto: int = 4000) -> str:
+def text_file_name(pages: Union[List, str], usage_callback: SimpleUsageCallback, tamanho_maximo: int = 100, limite_texto: int = 4000) -> str:
     """
     Gera um nome de arquivo para o texto limitando a entrada a um número específico de caracteres
 
     Args:
         pages: Páginas do documento (lista de objetos com .text) ou string direta
+        usage_callback: Callback compartilhado para rastrear usage
         tamanho_maximo: Tamanho máximo do nome do arquivo em caracteres
         limite_texto: Limite máximo de caracteres do texto de entrada
         
@@ -111,5 +114,5 @@ def text_file_name(pages: Union[List, str], tamanho_maximo: int = 100, limite_te
     Nome do arquivo:
     """
     
-    response = llm.invoke(prompt)
+    response = llm.invoke(prompt, config={"callbacks": [usage_callback]})
     return response.content.strip()
