@@ -87,7 +87,30 @@ public class FileUploadService : IFileUploadService
         CancellationToken cancellationToken
     )
     {
-        BlobClient createClient = _filesContainer.GetBlobClient(Guid.NewGuid() + "-" + inputFile.FileName);
+        string originalFileName = Path.GetFileName(inputFile.FileName);
+
+        if (string.IsNullOrWhiteSpace(originalFileName))
+        {
+            throw new InvalidOperationException("Nome do arquivo inválido para upload.");
+        }
+
+        string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(originalFileName);
+        string extension = Path.GetExtension(originalFileName);
+
+        string fileNameToUse = originalFileName;
+        BlobClient createClient = _filesContainer.GetBlobClient(fileNameToUse);
+
+        int duplicateCounter = 1;
+        while (await createClient.ExistsAsync(cancellationToken))
+        {
+            string suffix = duplicateCounter.ToString();
+            fileNameToUse = string.IsNullOrEmpty(fileNameWithoutExtension)
+                ? $"{suffix}{extension}"
+                : $"{fileNameWithoutExtension}_{suffix}{extension}";
+
+            createClient = _filesContainer.GetBlobClient(fileNameToUse);
+            duplicateCounter++;
+        }
 
         await using (Stream data = inputFile.OpenReadStream())
         {
