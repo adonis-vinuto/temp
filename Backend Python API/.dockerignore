@@ -1,0 +1,17 @@
+# Exclude version control and local development artifacts
+.git
+.gitignore
+.env
+__pycache__
+*.py[cod]
+*$py.class
+.venv
+venv/
+logs/
+*.log
+coverage/
+pytest_cache/
+.mypy_cache/
+.DS_Store
+.idea/
+.vscode/

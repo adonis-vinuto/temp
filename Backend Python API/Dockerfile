@@ -5,15 +5,20 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Instalar dependências do sistema necessárias para OCR e Pillow
-RUN apt-get update && apt-get install -y \
-    tesseract-ocr \
-    tesseract-ocr-por \
-    libgl1 \
-    wget \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        tesseract-ocr \
+        tesseract-ocr-por \
+        libgl1 \
+        wget \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements e instalar libs Python
 COPY requirements.txt .
+ENV PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir gunicorn
