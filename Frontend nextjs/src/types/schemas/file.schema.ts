@@ -29,7 +29,10 @@ export const AgentSchema = z.object({
 });
 
 export const FileWithRelationsSchema = FileSchema.extend({
-  pages: z.array(z.any()),
+  pages: z
+    .array(z.any())
+    .nullable()
+    .transform((pages) => pages ?? []),
   agents: z.array(AgentSchema),
 });
 
