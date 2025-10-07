@@ -4,11 +4,13 @@ import { z } from "zod";
 export const FileSchema = z.object({
   id: z.string().uuid(),
   fileName: z.string().min(1, "Nome do arquivo é obrigatório"),
+  generatedName: z.string().min(1).nullable().optional(),
   urlFile: z.string().nullable(),
   fileSize: z.number().optional(),
   mimeType: z.string().optional(),
   uploadedAt: z.string().datetime().optional(),
   idAgent: z.string().uuid().optional(),
+  resume: z.string().min(1).nullable().optional(),
 });
 
 export const UploadResultSchema = z.object({

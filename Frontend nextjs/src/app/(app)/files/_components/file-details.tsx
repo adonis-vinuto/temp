@@ -30,6 +30,8 @@ export function FileDetails({ fileId, onBack, onDeleted }: FileDetailsProps) {
   if (isError) return <ErrorState error={error} />;
   if (!fileData) return null;
 
+  const displayName = fileData.generatedName?.trim() || fileData.fileName;
+
   const openUrl = fileData.urlFile
     ? buildFrontFileUrl(fileData.urlFile, fileData.fileName, { download: false })
     : null;
@@ -59,6 +61,11 @@ export function FileDetails({ fileId, onBack, onDeleted }: FileDetailsProps) {
         <p>
           <span className="font-medium">Nome:</span> {fileData.fileName}
         </p>
+        {fileData.generatedName && fileData.generatedName !== fileData.fileName && (
+          <p>
+            <span className="font-medium">Nome gerado:</span> {displayName}
+          </p>
+        )}
         <p>
           <span className="font-medium">Tipo:</span> {fileData.mimeType ?? "N/A"}
         </p>
@@ -70,6 +77,14 @@ export function FileDetails({ fileId, onBack, onDeleted }: FileDetailsProps) {
           <span className="font-medium">Enviado em:</span>{" "}
           {fileData.uploadedAt ? new Date(fileData.uploadedAt).toLocaleString() : "N/A"}
         </p>
+        {fileData.resume && (
+          <div>
+            <span className="font-medium">Resumo:</span>
+            <p className="mt-1 text-sm text-foreground/80 whitespace-pre-line">
+              {fileData.resume}
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2">

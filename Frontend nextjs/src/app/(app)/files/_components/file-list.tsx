@@ -21,7 +21,7 @@ export function FileList({
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div
-          className="bg-sidebar hover:bg-sidebar/80 text-white rounded-lg shadow hover:shadow-lg transition flex flex-col items-center justify-center p-4 h-32 cursor-pointer"
+          className="bg-sidebar hover:bg-sidebar/80 text-white rounded-lg shadow hover:shadow-lg transition flex flex-col items-center justify-center p-4 min-h-[9rem] cursor-pointer"
           onClick={onNew}
         >
           <span className="text-2xl font-bold">+</span>
@@ -29,6 +29,7 @@ export function FileList({
         </div>
 
         {files.itens.map((file) => {
+          const displayName = file.generatedName?.trim() || file.fileName;
           const ext = file.fileName.split(".").pop()?.toLowerCase() ?? "";
           const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(ext);
           const isPdf = ext === "pdf";
@@ -38,7 +39,7 @@ export function FileList({
           return (
             <div
               key={file.id}
-              className="bg-sidebar hover:bg-sidebar/80 border border-blue-300/20 shadow-md text-white rounded-lg hover:shadow-lg transition flex flex-col items-center justify-between p-4 h-32 cursor-pointer relative"
+              className="bg-sidebar hover:bg-sidebar/80 border border-blue-300/20 shadow-md text-white rounded-lg hover:shadow-lg transition flex flex-col items-center justify-between p-4 min-h-[9rem] cursor-pointer relative"
               onClick={() => onSelectFile?.(file.id)}
             >
               <Image
@@ -53,7 +54,7 @@ export function FileList({
                     ? "/images/xlsx.png"
                     : "/images/file.png"
                 }
-                alt={file.fileName}
+                alt={displayName}
                 width={32}
                 height={32}
                 className="object-contain"
@@ -61,10 +62,23 @@ export function FileList({
 
               <p
                 className="text-[12px] font-medium text-center truncate w-full"
-                title={file.fileName}
+                title={displayName}
               >
-                {file.fileName}
+                {displayName}
               </p>
+              {file.resume && (
+                <p
+                  className="mt-1 text-[11px] text-center text-white/80 overflow-hidden w-full"
+                  style={{
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                  }}
+                  title={file.resume}
+                >
+                  {file.resume}
+                </p>
+              )}
             </div>
           );
         })}
