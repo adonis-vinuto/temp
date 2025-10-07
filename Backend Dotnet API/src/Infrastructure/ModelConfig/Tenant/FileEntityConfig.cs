@@ -28,6 +28,10 @@ public sealed class FileConfiguration : IEntityTypeConfiguration<FileEntity>
             .IsRequired(false)
             .HasMaxLength(1000);
 
+        builder.Property(x => x.Resume)
+            .IsRequired(false)
+            .HasColumnType("longtext");
+
         builder.Property(x => x.CompletionTokens)
             .IsRequired(false);
 

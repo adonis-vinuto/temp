@@ -165,16 +165,15 @@ public class GemelliAIService : IGemelliAIService
                 organization ?? string.Empty,
                 idAgent ?? string.Empty,
                 idFile ?? string.Empty,
-                cancellationToken);
+                cancellationToken
+            );
 
-            bool deletionSucceeded = response?.Deleted ?? true;
-
-            if (!deletionSucceeded)
+            if (response is { Deleted: false } failedResponse)
             {
-                string? responseMessage = response?.Message;
-                string message = !string.IsNullOrWhiteSpace(responseMessage)
-                    ? responseMessage
-                    : "Falha ao deletar arquivo na IA.";
+                string responseMessage = failedResponse.Message;
+                string message = string.IsNullOrWhiteSpace(responseMessage)
+                    ? "Falha ao deletar arquivo na IA."
+                    : responseMessage;
 
                 return Error.Failure("IA.File.Delete.Error", message);
             }
