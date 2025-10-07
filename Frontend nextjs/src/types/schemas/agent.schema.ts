@@ -20,7 +20,10 @@ export const PageSchema = z.object({
 });
 
 export const FileWithPagesSchema = FileSchema.extend({
-  pages: z.array(PageSchema),
+  pages: z
+    .array(PageSchema)
+    .nullable()
+    .transform((pages) => pages ?? []),
 });
 
 export const ChatSessionSchema = z.object({
