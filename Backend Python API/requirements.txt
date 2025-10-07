@@ -28,4 +28,3 @@ sentence-transformers
 numpy
 openai
 langchain-openai
-pytest

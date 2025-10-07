@@ -193,58 +193,74 @@ class QdrantRepository:
             raise
 
     def delete_vectors_by_filter(
-            self,
-            tenant_id: str,
-            collection_name: str,
-            id_agent: str,
-            id_file: str,
-            wait: bool = True) -> Dict[str, Any]:
+        self,
+        tenant_id: str,
+        collection_name: str,
+        id_agent: str,
+        id_file: str,
+        wait: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Exclui a *coleção inteira* (não apenas por filtro) conforme a doc:
+        https://api.qdrant.tech/api-reference/collections/delete-collection
+
+        Observação: os parâmetros id_agent e id_file não são usados aqui,
+        pois a operação remove a coleção completa.
+        """
         if not self.collection_exists(tenant_id, collection_name):
             raise ValueError(f"Collection '{collection_name}' does not exist for tenant '{tenant_id}'.")
 
         full_name = self.collection_name(tenant_id, collection_name)
 
-        payload_filter = models.Filter(
-            must=[
-                models.FieldCondition(
-                    key="metadata.id_agent",
-                    match=models.MatchValue(value=id_agent)
-                ),
-                models.FieldCondition(
-                    key="metadata.id_file",
-                    match=models.MatchValue(value=id_file)
-                )
-            ]
-        )
-
         try:
-            count_result = self.client.count(
+            # Conta pontos existentes (exato) para reportar no retorno
+            count_resp = self.client.count(collection_name=full_name, exact=True)
+
+            # Extrai o número de pontos de forma resiliente a diferentes formatos
+            deleted_count = 0
+            if hasattr(count_resp, "count"):
+                deleted_count = int(getattr(count_resp, "count", 0))
+            elif isinstance(count_resp, dict):
+                # formato REST-like: {"status":"ok","result":{"count":N}}
+                deleted_count = int(count_resp.get("result", {}).get("count", 0))
+
+            # Tempo de espera: a API aceita "timeout" em segundos
+            timeout_sec = 60 if wait else None
+
+            delete_resp = self.client.delete_collection(
                 collection_name=full_name,
-                filter=payload_filter,
-                exact=True
+                timeout=timeout_sec
             )
 
-            delete_result = self.client.delete(
-                collection_name=full_name,
-                filter=payload_filter,
-                wait=wait
-            )
-
-            status_value = delete_result.status.value if hasattr(delete_result.status, "value") else str(delete_result.status)
+            # Normaliza o retorno: o client Python costuma devolver bool
+            # True => sucesso; False/None => falha
+            if isinstance(delete_resp, bool):
+                status_value = "ok" if delete_resp else "error"
+                operation_id = None
+            elif isinstance(delete_resp, dict):
+                status_value = str(delete_resp.get("status", "ok" if delete_resp.get("result") else "error"))
+                operation_id = delete_resp.get("operation_id")
+            else:
+                # fallback para objetos com atributo .status/.operation_id (caso alguma versão traga isso)
+                status_value = getattr(getattr(delete_resp, "status", None), "value", None) or \
+                            str(getattr(delete_resp, "status", "ok"))
+                operation_id = getattr(delete_resp, "operation_id", None)
 
             return {
                 "status": status_value,
-                "operation_id": delete_result.operation_id,
-                "deleted_count": getattr(count_result, "count", 0)
+                "operation_id": operation_id,
+                "deleted_count": deleted_count,
+                "collection": full_name,
             }
 
         except Exception as e:
             logger.error(
-                "Failed to delete vectors by filter from collection '%s': %s",
-                collection_name,
+                "Failed to delete collection '%s': %s",
+                full_name,
                 e
             )
             raise
+
     
     def search_vectors(
         self, 
