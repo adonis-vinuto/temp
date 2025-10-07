@@ -10,6 +10,15 @@ public class FileDeletionResponse
     [JsonPropertyName("deleted")]
     public bool Deleted { get; set; }
 
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = string.Empty;
+
+    [JsonPropertyName("deleted_count")]
+    public int DeletedCount { get; set; }
+
+    [JsonPropertyName("operation_id")]
+    public string? OperationId { get; set; }
+
     [JsonPropertyName("file_info")]
     public FileInfoResponse? FileInfo { get; set; }
 

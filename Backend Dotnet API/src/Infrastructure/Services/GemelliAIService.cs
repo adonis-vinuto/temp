@@ -5,6 +5,7 @@ using Infrastructure.Contracts.GemelliAI.Response;
 using Infrastructure.HttpClient.GemelliAI;
 using Microsoft.Extensions.Logging;
 using Refit;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
@@ -168,9 +169,13 @@ public class GemelliAIService : IGemelliAIService
                 cancellationToken
             );
 
-            if (response is { Deleted: false } failedResponse)
+            bool isDeleted = response.Deleted
+                || string.Equals(response.Status, "ok", StringComparison.OrdinalIgnoreCase)
+                || response.DeletedCount > 0;
+
+            if (!isDeleted)
             {
-                string responseMessage = failedResponse.Message;
+                string responseMessage = response.Message;
                 string message = string.IsNullOrWhiteSpace(responseMessage)
                     ? "Falha ao deletar arquivo na IA."
                     : responseMessage;
