@@ -7,6 +7,7 @@ using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Azure.Storage.Sas;
+using System.Globalization;
 using System.IO;
 
 namespace Infrastructure.Services;
@@ -103,7 +104,7 @@ public class FileUploadService : IFileUploadService
         int duplicateCounter = 1;
         while (await createClient.ExistsAsync(cancellationToken))
         {
-            string suffix = duplicateCounter.ToString();
+            string suffix = duplicateCounter.ToString(CultureInfo.InvariantCulture);
             fileNameToUse = string.IsNullOrEmpty(fileNameWithoutExtension)
                 ? $"{suffix}{extension}"
                 : $"{fileNameWithoutExtension}_{suffix}{extension}";
