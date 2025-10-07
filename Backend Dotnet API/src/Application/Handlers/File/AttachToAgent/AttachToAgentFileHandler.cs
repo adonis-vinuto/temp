@@ -70,12 +70,9 @@ public class AttachToAgentFileHandler : BaseHandler
             return AgentErrors.AgentNotFound;
         }
 
-        bool shouldPersist = false;
-
         if (file.HasAgent(request.IdAgent))
         {
             file.RemoveAgent(agent.Id);
-            shouldPersist = true;
         }
         else
         {
@@ -111,14 +108,10 @@ public class AttachToAgentFileHandler : BaseHandler
             file.AddAgent(agent);
             file.Resume = aiResponse.Value.Resume;
             file.GeneratedName = aiResponse.Value.FileName;
-            shouldPersist = true;
         }
 
-        if (shouldPersist)
-        {
-            _fileRepository.Update(file);
-            await _fileRepository.UnitOfWork.Commit();
-        }
+        _fileRepository.Update(file);
+        await _fileRepository.UnitOfWork.Commit();
 
         FileResponse fileResponse = file.Adapt<FileResponse>();
         return fileResponse;

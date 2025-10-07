@@ -171,8 +171,9 @@ public class GemelliAIService : IGemelliAIService
 
             if (!deletionSucceeded)
             {
-                string message = !string.IsNullOrWhiteSpace(response?.Message)
-                    ? response!.Message
+                string? responseMessage = response?.Message;
+                string message = !string.IsNullOrWhiteSpace(responseMessage)
+                    ? responseMessage
                     : "Falha ao deletar arquivo na IA.";
 
                 return Error.Failure("IA.File.Delete.Error", message);
