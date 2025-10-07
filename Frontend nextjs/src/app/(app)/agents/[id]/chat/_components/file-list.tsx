@@ -94,6 +94,7 @@ export function FileList({ files, agentId, onFilesChanged }: FileListProps) {
       </div>
       <div className="flex-1 overflow-y-auto space-y-1 p-2">
         {files?.map((file) => {
+          const displayName = file.generatedName?.trim() || file.fileName;
           const ext = file.fileName.split(".").pop()?.toLowerCase() ?? "";
           const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(ext);
           const isPdf = ext === "pdf";
@@ -103,7 +104,7 @@ export function FileList({ files, agentId, onFilesChanged }: FileListProps) {
           return (
             <div
               key={file.id}
-              className="relative bg-sidebar hover:bg-sidebar/80 border border-blue-300/20 shadow-md text-white rounded-lg hover:shadow-lg transition flex flex-col items-center justify-between p-4 h-24 cursor-pointer"
+              className="relative bg-sidebar hover:bg-sidebar/80 border border-blue-300/20 shadow-md text-white rounded-lg hover:shadow-lg transition flex flex-col items-center justify-between p-4 min-h-[7.5rem] cursor-pointer"
               onClick={() => {
                 setSelectedFileId(file.id);
                 setDialogOpen(true);
@@ -132,17 +133,30 @@ export function FileList({ files, agentId, onFilesChanged }: FileListProps) {
                     ? "/images/xlsx.png"
                     : "/images/file.png"
                 }
-                alt={file.fileName}
+                alt={displayName}
                 width={32}
                 height={32}
                 className="object-contain"
               />
               <p
                 className="text-[12px] font-medium text-center truncate w-full"
-                title={file.fileName}
+                title={displayName}
               >
-                {file.fileName}
+                {displayName}
               </p>
+              {file.resume && (
+                <p
+                  className="mt-1 text-[11px] text-center text-white/80 overflow-hidden w-full"
+                  style={{
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                  }}
+                  title={file.resume}
+                >
+                  {file.resume}
+                </p>
+              )}
             </div>
           );
         })}
