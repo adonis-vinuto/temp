@@ -10,7 +10,7 @@ import { FileDetails } from "../../../../files/_components/file-details";
 import { FileList as SelectFileList } from "../../../../files/_components/file-list";
 import { UploadForm } from "../../../../files/_components/upload-form";
 import { useFilesPage } from "../../../../files/_hooks/use-files-page.hook";
-import { attachFileToAgent } from "@/lib/api/file.client";
+import { attachFileToAgent, detachFileFromAgent } from "@/lib/api/file.client";
 import { toast } from "sonner";
 
 interface FileListProps {
@@ -42,16 +42,24 @@ export function FileList({ files, agentId, onFilesChanged }: FileListProps) {
     handleDrop,
   } = useFilesPage();
 
-  const handleAttachFile = async (fileId: string, desanexar = false) => {
+  const handleAttachFile = async (fileId: string) => {
     try {
       await attachFileToAgent(fileId, { idAgent: agentId });
-      toast.success(
-        `Arquivo ${desanexar ? "desanexado do" : "anexado ao"} agente!`
-      );
+      toast.success("Arquivo anexado ao agente!");
       onFilesChanged?.();
       setAddDialogOpen(false);
     } catch (err) {
       toast.error("Erro ao anexar arquivo: " + err);
+    }
+  };
+
+  const handleDetachFile = async (fileId: string) => {
+    try {
+      await detachFileFromAgent(fileId, agentId);
+      toast.success("Arquivo desanexado do agente!");
+      onFilesChanged?.();
+    } catch (err) {
+      toast.error("Erro ao desanexar arquivo: " + err);
     }
   };
 
@@ -115,7 +123,7 @@ export function FileList({ files, agentId, onFilesChanged }: FileListProps) {
                 className="absolute top-2 right-2 text-red-400 hover:text-red-600"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleAttachFile(file.id, true);
+                  handleDetachFile(file.id);
                 }}
                 title="Desanexar"
               >

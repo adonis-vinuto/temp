@@ -108,3 +108,7 @@ export async function attachFileToAgent(
 ) {
   await fetchFileClient(`/${id}/attach`, "PUT", payload);
 }
+
+export async function detachFileFromAgent(fileId: string, agentId: string) {
+  await fetchFileClient(`/${fileId}/attach/${agentId}`, "DELETE");
+}
