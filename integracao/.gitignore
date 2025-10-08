@@ -1,0 +1,77 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Diretórios de ambiente virtual
+.env/
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Arquivos de configuração do pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Distribuição / pacotes de build
+build/
+dist/
+*.egg-info/
+*.egg
+.installed.cfg
+*.egg-info/
+.eggs/
+
+# Arquivos criados pelo pytest
+.cache/
+.pytest_cache/
+
+# Cache e log do mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Cache do Pyre
+.pyre/
+
+# Test coverage reports
+htmlcov/
+.tox/
+.nox/
+
+# Arquivos de IDEs e editores
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Arquivos de configuração de Docker e Kubernetes
+docker-compose*.yaml
+.docker/
+.dockerignore
+
+# Arquivos de configuração de Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Logs e arquivos temporários
+*.log
+*.tmp
+*.temp
+*.out
+*.pid
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos de pacotes locais do Python
+.python_packages
+
+# Arquivos de configuração adicionais
+api_config.config
+protheus.config
+bd2.config

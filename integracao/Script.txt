@@ -1,0 +1,17 @@
+//Comando para criar o ambiente local python
+python -m venv .venv
+
+//Comando para acessar pelo terminal o ambiente local python
+.venv\Scripts\activate 
+
+//Comando para baixar os pacotes listados no arquivo requirements.txt
+pip install -r requirements.txt
+
+//Comando para executar main
+py views\MainScriptRunner.py
+
+//Azure Functions Core Tools: Certifique-se de que o Azure Functions Core Tools está instalado. Você pode instalá-lo com:
+npm install -g azure-functions-core-tools@4 --unsafe-perm true
+
+//Inicie a Azure Function: Com o ambiente correto, agora você pode iniciar sua função localmente:
+func start
