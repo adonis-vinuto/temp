@@ -23,6 +23,24 @@ class ExpenseObjectController:
             print(f"❌ Erro ao buscar IDs das despesas: {e}")
             return []
 
+    def _get_expense_data(self, expense_id, include=None):
+        """Normaliza o retorno da API de detalhes de despesa para um dicionário."""
+        expense_details = self.api_service.get_expense_details(expense_id, include=include)
+
+        if isinstance(expense_details, list):
+            if not expense_details:
+                print(f"⚠️ Nenhum dado retornado para a despesa {expense_id}.")
+                return None
+            expense_data = expense_details[0]
+        else:
+            expense_data = expense_details
+
+        if not isinstance(expense_data, dict):
+            print(f"⚠️ Formato inesperado ao buscar detalhes da despesa {expense_id}: {expense_data}")
+            return None
+
+        return expense_data
+
     def import_costs_center_from_expenses(self, expense_ids):
         """
         Busca os objetos 'costs_center' de despesas via API e os insere ou atualiza no BD.
@@ -33,15 +51,12 @@ class ExpenseObjectController:
                 # print(f"Processando despesa com ID: {expense_id}...")
 
                 # Busca os detalhes da despesa pelo ID, incluindo o 'costs_center'
-                expense_data = self.api_service.get_expense_details(expense_id, include="costs_center")
-                
-                # Verifica se há dados retornados
-                if not expense_data:
-                    print(f"⚠️ Nenhum dado retornado para a despesa {expense_id}.")
+                expense_data = self._get_expense_data(expense_id, include="costs_center")
+                if expense_data is None:
                     continue
 
                 # Extrai o objeto 'costs_center' da resposta
-                costs_center_data = expense_data.get("data", {}).get("costs_center", {}).get("data")
+                costs_center_data = expense_data.get("costs_center", {}).get("data")
 
                 # Verifica se costs_center_data é um dicionário antes de tentar acessar o 'id'
                 if isinstance(costs_center_data, dict):
@@ -50,8 +65,6 @@ class ExpenseObjectController:
                     # print(f"ID Centro de Custo: {cost_center_id}")
                     
                     # Verifica se o Centro de Custo já existe no banco de dados
-                    existing_cost_center = self.cost_center_model.get_cost_center_by_id(cost_center_id)
-
                     if self.cost_center_model.cost_center_exists(cost_center_id):
                         # Atualiza
                         self.cost_center_model.update_cost_center(costs_center_data)
@@ -84,14 +97,12 @@ class ExpenseObjectController:
         try:
             for expense_id in expense_ids:
                 # Busca detalhes da despesa, incluindo o 'report'
-                expense_data = self.api_service.get_expense_details(expense_id, include="report")
-
-                if not expense_data:
-                    print(f"⚠️ Nenhum dado retornado para a despesa {expense_id}.")
+                expense_data = self._get_expense_data(expense_id, include="report")
+                if expense_data is None:
                     continue
 
                 # Extrai o objeto 'report' da resposta
-                report_data = expense_data.get("data", {}).get("report", {}).get("data")
+                report_data = expense_data.get("report", {}).get("data")
                 if isinstance(report_data, dict):
                     report_id = report_data.get("id")
 
