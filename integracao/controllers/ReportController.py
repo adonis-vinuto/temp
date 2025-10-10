@@ -28,7 +28,7 @@ class ReportController:
 
             # Consultar a última data de atualização
             start_date = self.get_last_updated_date()
-            start_date = '2025-09-01'
+            start_date = '2025-10-01'
             # Definir a data atual como end_date
             # end_date = '2024-12-31'
             end_date = datetime.now().strftime('%Y-%m-%d')  # Obter a data atual no formato YYYY-MM-DD

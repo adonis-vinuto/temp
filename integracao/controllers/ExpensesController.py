@@ -37,11 +37,11 @@ class ExpensesController:
                 return result_str
             else:
                 print("Nenhuma data encontrada, usando data padrão '2025-09-01'.")
-                return "2025-09-01"
+                return "2025-10-01"
 
         except Exception as e:
             print(f"Erro SQL em get_last_updated_date: {e}")
-            return "2025-09-01"
+            return "2025-10-01"
 
     def import_expenses(self, end_date=None):
         """

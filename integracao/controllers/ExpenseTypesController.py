@@ -42,7 +42,7 @@ class ExpenseTypesController:
         try:
             # Consultar a última data de atualização
             # start_date = self.get_last_updated_date()
-            start_date = '2025-09-01'
+            start_date = '2025-10-01'
             # Definir a data atual como end_date
             end_date = datetime.now().strftime('%Y-%m-%d')
             print(f"Buscando tipos de despesas entre {start_date} e {end_date}...")

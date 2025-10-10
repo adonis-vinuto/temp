@@ -19,7 +19,7 @@ class ReportModel:
             report['status'],
             report['approval_stage_id'],
             report['approval_user_id'],
-            report['approval_date'],
+            parse_datetime_or_none(report['approval_date']),
             report['paying_company_id'],
             report['payment_date'],
             report['payment_method_id'],
@@ -134,7 +134,7 @@ class ReportModel:
 	        report.get('status'),                       # Status do relatório
 	        report.get('approval_stage_id'),            # ID da fase de aprovação
 	        report.get('approval_user_id'),             # ID do usuário que aprovou o relatório
-	        report['approval_date'],                    # Data de aprovação
+	        parse_datetime_or_none(report['approval_date']),                    # Data de aprovação
 	        report.get('paying_company_id'),            # ID da empresa pagadora
 	        report['payment_date'],                     # Data de pagamento
 	        report.get('payment_method_id'),            # ID do método de pagamento
@@ -171,3 +171,21 @@ class ReportModel:
 
         finally:
             cursor.close()
+
+from datetime import datetime
+
+def parse_datetime_or_none(value):
+    """
+    Converte uma string datetime no formato 'YYYY-MM-DD HH:MM:SS' para objeto datetime.
+    Retorna None se o valor for None ou string vazia.
+    """
+    if value in (None, "", "null"):
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        # Caso venha só a data sem hora
+        try:
+            return datetime.strptime(value, "%Y-%m-%d")
+        except Exception:
+            return None

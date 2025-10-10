@@ -37,7 +37,7 @@ class ExpenseModel:
             expense.get('route_id') or None,
             expense.get('receipt_url') or None,
             expense.get('date') or None,
-            expense.get('expense_value') or None,
+            expense.get('value') or None,
             expense.get('title') or None,  
             expense.get('expense_validate') or None,  
             expense.get('observation') or None,  
@@ -107,7 +107,7 @@ class ExpenseModel:
             if result:
                 return {
                     'id': result[0],
-                    'updated_at': result[-1]
+                    'updated_at': result[-2]
                 }
             return None
         except Exception as e:
@@ -129,7 +129,7 @@ class ExpenseModel:
             "route_id": expense.get('route_id'),
             "receipt_url": expense.get('receipt_url'),
             "date": expense.get('date'),
-            "expense_value": expense.get('expense_value'),
+            "expense_value": expense.get('value'),
             "title": expense.get('title'),
             "expense_validate": expense.get('expense_validate'),
             "observation": expense.get('observation'),
